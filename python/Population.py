@@ -10,21 +10,61 @@ class Population():
     -----------------
     strains (dict): set of strains making up a single population
     """
-    def __init__(self, strains:dict):
+    def __init__(self, name:str, strains:dict):
+
+        self.__name = name
         self.__strains = strains
+        self.__updatePopSize()
+
     
     """
     Attribute functions
     """
 
+    def name(self):
+        return self.__name
+
     def getStrain(self, strainName:str):
         return self.__strains[strainName]
+
+    def popSize(self):
+        return self.__popSize
+
+    """
+    Main timestep function
+    """
+    def timestep(self, N:int, a:float, b:float, c:float):
+        """
+        N (int): total community size
+        a (float): competition coefficient
+        b (float): intrinsic growth rate
+        c (float): cost of crispr
+        """
+        # pop = {strainName:strain.timestep(N,a,b,c) for (strainName,strain) in self.__strains.items()} # perform timestep on all strains
+        # self.__strains = pop
+        for strainName in self.__strains:
+            self.__strains[strainName].timestep(N,a,b,c)
+        self.__updatePopSize() # re-calculate population size
+
+        return None
 
     """
     Other functions
     """
 
-    def newSpacer(self, strainName:str, newStrainName:str, phage:Phage.Phage):
+    def __updatePopSize(self):
+        """Re-total population size across all strains"""
+        strains = self.__strains
+        popSize = 0
+
+        for i in strains:
+            popSize += strains[i].pop()
+        
+        self.__popSize = popSize
+
+        return None
+
+    def newSpacer(self, strainName:str, newStrainName:str, phage:Phage):
 
         """Adds a new strain based on another but with a new spacer"""
 
@@ -39,6 +79,9 @@ class Population():
         )
 
         self.__strains[newStrainName] = newStrain
+
+        self.__updatePopSize() # re-calculate population size
+
         return None
     # mutations of receptors, new spacers?
 
@@ -69,7 +112,10 @@ class Population():
 
         newStrain.addReceptor(newReceptor)
         newStrain.removeReceptor(receptor.name())
+
         self.__strains[newReceptorName] = newReceptor
+
+        self.__updatePopSize() # re-calculate pop size
 
         return None
         

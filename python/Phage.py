@@ -14,15 +14,14 @@ class Phage():
     name (str): the name of the phage
     genomeLength (int): number of genes in genome
     population (int): population size 
-    targetPop (Population): the population this phage infects
     """
 
-    def __init__(self, name:str, phageReceptor, targetPop:Population.Population,genome:str = None, genomeLength:int = 100, pop = 100):
+    def __init__(self, name:str, phageReceptor:PhageReceptor.PhageReceptor, genome:str = None, genomeLength:int = 100, pop:float = 1):
 
         self.__name = name
         self.__pop = pop
         self.__phageReceptor = phageReceptor
-        self.__targetPop = targetPop
+        # self.__targetPop = targetPop
 
         if not genome is None: 
             self.__genome = genome
@@ -46,8 +45,8 @@ class Phage():
     def pop(self):
         return(self.__pop)
 
-    def targetPop(self):
-        return(self.__targetPop)
+    # def targetPop(self):
+    #     return(self.__targetPop)
 
     """
     Other functions

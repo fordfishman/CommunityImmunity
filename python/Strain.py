@@ -5,23 +5,34 @@ import Error as er
 
 class Strain():
     """
+    name (str)
+    crispr (Crispr)
+    phReceptors (dict)
+    activeReceptors (dict)
+    pop (float)
+
     """
-    def __init__(self, name:str, crispr:Crispr.Crispr = None, phReceptors:dict = None, pop:int = 1):
+    def __init__(self, name:str, crispr:Crispr.Crispr = None, phReceptors:dict = None, pop:float = 1):
         self.__name = name
         self.__crispr = crispr
         self.__phReceptors = phReceptors
         self.__activeReceptors = dict()
-        self.__pop = 1
+        self.__pop = pop
         self.__intrinsicFitness = 1 # CHANGE THIS AT SOME POINT WHEN I ADD IN RESOURCES
-        for receptorName in phReceptors: # for all receptors in a strain
-            # if the receptor just became active, add to active dict
-            if phReceptors[receptorName].isExpressed():
-                self.__activeReceptors[receptorName] = phReceptors[receptorName]
+        
+        if not phReceptors is None:
+            for receptorName in phReceptors: # for all receptors in a strain
+                # if the receptor just became active, add to active dict
+                if phReceptors[receptorName].isExpressed():
+                    self.__activeReceptors[receptorName] = phReceptors[receptorName]
 
 
     """
     Attribute functions
     """
+
+    def name(self):
+        return self.__name
 
     def phReceptors(self):
         return self.__phReceptors
@@ -42,20 +53,30 @@ class Strain():
     Other functions
     """
     # Maybe remove references to Phage in everything but community?
-    def isVulnerable(self, phage:Phage.Phage): 
+    def isVulnerable(self, phage:Phage): 
         """Does this strain have the phage receptor to be vulnerable to this phage"""
         receptorTarget = phage.phageReceptor().name()
         # if the receptor is in strain and is expressed
         return receptorTarget in self.__phReceptors and self.__phReceptors[receptorTarget].isExpressed()  
 
 
-    def isImmune(self, phage:Phage.Phage):
+    def isImmune(self, phage:Phage):
         """Does the strain have CRISPR resistance"""
         crispr = self.__crispr
         
         return crispr.hasSpacer( phageGenome = phage.genome() )
 
-    def growth(self):
+    def timestep(self, N:int, a:float, b:float, c:float):
+        """
+        N (int): total strain size
+        a (float): competition coefficient
+        b (float): intrinsic growth rate
+        c (float): cost of crispr
+        """
+        if not self.__hasCost():
+            c = 0
+        b = b * ( self.__intrinsicFitness - c )
+        self.__pop = ( b*self.__pop )/( 1 + a*N ) # Beverton-Holt Model
 
         return None
 
@@ -66,11 +87,23 @@ class Strain():
         return None
 
     def removeReceptor(self, receptorName:str):
-        """Removes receptor from strain. Use when a receptor is modified (old one is lost, new one is gained"""
+        """Removes receptor from strain. Use when a receptor is modified (old one is lost, new one is gained)"""
         
         self.__phReceptors.pop(receptorName)
         
         return None
+
+    def __hasCost(self):
+        """Is there a CRISPR-associated cost to this strain?"""
+        cost = False # initialize cost to be 0
+
+        if not self.__crispr is None: # if strain has a crispr 
+
+            cost = self.__crispr.hasCost()
+
+        return cost
+        
+        
     # def changeReceptorActivity(self, receptorName:str, active:bool):
 
     #     phReceptors = self.__phReceptors
@@ -91,4 +124,31 @@ class Strain():
     #     finally:
     #         return None
 
-    
+"""
+Print tests
+"""
+
+# timesteps = 4
+# pS = 0.001 # prob of spacer forming if infection occurs
+# b = 1.6 # initial max intrinsic growth
+# a = 0.04 # competition coefficient (inter and intraspecific)
+# crisprCost = 0.5 # fitness cost of having active CRISPR system
+
+# receptor1 = PhageReceptor.PhageReceptor( name = "r" + "1" ) # change numbering system
+
+# crispr0 = Crispr.Crispr(spacerLength=1)
+# print(crispr0.hasCost())
+# crispr0.newSpacer("GATG")
+# print(crispr0.hasCost())
+# strain1 = Strain(
+#     name = "s" + "1",
+#     crispr = crispr0,
+#     phReceptors = {
+#         receptor1.name():receptor1
+#         },
+#     pop = 3
+# )
+# for i in range(timesteps): 
+#     strain1.timestep(strain1.pop(), a, b, crisprCost)
+
+# print(strain1.pop())
