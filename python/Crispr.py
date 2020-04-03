@@ -3,7 +3,10 @@
 import Spacer
 import numpy as np
 
+##########################################################################################################
+
 class Crispr():
+
     """
     Crispr
     Represents a CRISPR locus
@@ -22,6 +25,8 @@ class Crispr():
         self.__spacerLength = spacerLength
         self.__isActive = isActive
         self.__updateCost()
+        
+##########################################################################################################
 
     """
     Attribute Functions
@@ -47,6 +52,8 @@ class Crispr():
 
     def isActive(self):
         return (self.__isActive)
+
+##########################################################################################################
 
     """
     Other functions
@@ -84,7 +91,9 @@ class Crispr():
 
         self.__updateCost() # check to see if there is a cost to the CRISPR now
 
-        return None        
+        return None    
+
+##########################################################################################################
 
     """
     Private

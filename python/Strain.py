@@ -1,16 +1,20 @@
 ## Ford Fishman
 
-import Spacer; import Crispr; import PhageReceptor; import Phage
+import Spacer; import Crispr; import PhageReceptor
 import Error as er
 
+##########################################################################################################
+
 class Strain():
+
     """
     name (str)
     crispr (Crispr)
     phReceptors (dict)
     activeReceptors (dict)
     pop (float)
-
+    intrinsicFitness (float)
+    phages (set(str)): names of phages this strain can be infected by
     """
     def __init__(self, name:str, crispr:Crispr.Crispr = None, phReceptors:dict = None, pop:float = 1):
         self.__name = name
@@ -19,6 +23,7 @@ class Strain():
         self.__activeReceptors = dict()
         self.__pop = pop
         self.__intrinsicFitness = 1 # CHANGE THIS AT SOME POINT WHEN I ADD IN RESOURCES
+        self.__phages = set()
         
         if not phReceptors is None:
             for receptorName in phReceptors: # for all receptors in a strain
@@ -26,6 +31,7 @@ class Strain():
                 if phReceptors[receptorName].isExpressed():
                     self.__activeReceptors[receptorName] = phReceptors[receptorName]
 
+##########################################################################################################
 
     """
     Attribute functions
@@ -49,34 +55,63 @@ class Strain():
     def intrinsicFitness(self):
         return self.__intrinsicFitness
 
+    def phages(self):
+        return (self.__phages)
+
+##########################################################################################################
     """
-    Other functions
+    Main timestep function
     """
-    # Maybe remove references to Phage in everything but community?
-    def isVulnerable(self, phage:Phage): 
-        """Does this strain have the phage receptor to be vulnerable to this phage"""
-        receptorTarget = phage.phageReceptor().name()
-        # if the receptor is in strain and is expressed
-        return receptorTarget in self.__phReceptors and self.__phReceptors[receptorTarget].isExpressed()  
-
-
-    def isImmune(self, phage:Phage):
-        """Does the strain have CRISPR resistance"""
-        crispr = self.__crispr
-        
-        return crispr.hasSpacer( phageGenome = phage.genome() )
-
-    def timestep(self, N:int, a:float, b:float, c:float):
+    def timestep(self, N:int, a:float, b:float, c:float, y:float, absP:float, p:float ):
         """
-        N (int): total strain size
+        N (int): total host density
         a (float): competition coefficient
         b (float): intrinsic growth rate
         c (float): cost of crispr
+        absP (float): absorbance rate of phage to host
+        p (float): phage density
+        y (float):
         """
-        if not self.__hasCost():
+
+        if not self.__hasCost(): # set cost to 0 if strain does not have CRISPR-associated cost
             c = 0
-        b = b * ( self.__intrinsicFitness - c )
-        self.__pop = ( b*self.__pop )/( 1 + a*N ) # Beverton-Holt Model
+
+        # fitness
+        r = b * ( self.__intrinsicFitness - c ) - absP*p
+            # self.__pop = ( b*self.__pop )/( 1 + ( N/a )**y ) # Beverton-Holt Model
+        # reproduce
+        self.__pop = ( r*self.__pop )/( 1 + ( N/a )**y ) 
+        if self.__pop < 1: self.__pop = 0
+        return None
+
+##########################################################################################################
+
+    """
+    Other functions
+    """
+
+    def isVulnerable(self, receptor:str): 
+        """Does this strain have the phage receptor to be vulnerable to this phage"""
+        # if the receptor is in strain and is expressed
+        return receptor in self.__phReceptors and self.__phReceptors[receptor].isExpressed()  
+
+
+    def isImmune(self, phageGenome:str):
+        """Does the strain have CRISPR resistance"""
+        crispr = self.__crispr
+        
+        return crispr.hasSpacer( genome = phageGenome )
+
+    def updatePhages(self, receptor:str, phageGenome:str, phageName:str):
+        """Updates set of infectable phages"""
+
+        if self.isVulnerable(receptor) and not self.isImmune(phageGenome):
+
+            self.__phages.add(phageName)
+        
+        else: 
+
+            self.__phages.remove(phageName)
 
         return None
 
@@ -92,18 +127,6 @@ class Strain():
         self.__phReceptors.pop(receptorName)
         
         return None
-
-    def __hasCost(self):
-        """Is there a CRISPR-associated cost to this strain?"""
-        cost = False # initialize cost to be 0
-
-        if not self.__crispr is None: # if strain has a crispr 
-
-            cost = self.__crispr.hasCost()
-
-        return cost
-        
-        
     # def changeReceptorActivity(self, receptorName:str, active:bool):
 
     #     phReceptors = self.__phReceptors
@@ -123,6 +146,27 @@ class Strain():
 
     #     finally:
     #         return None
+    
+##########################################################################################################
+
+    """
+    Private methods
+    """
+
+    def __hasCost(self):
+        """Is there a CRISPR-associated cost to this strain?"""
+        cost = False # initialize cost to be 0
+
+        if not self.__crispr is None: # if strain has a crispr 
+
+            cost = self.__crispr.hasCost()
+
+        return cost
+        
+        
+
+
+##########################################################################################################
 
 """
 Print tests
