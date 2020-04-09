@@ -1,7 +1,9 @@
 ## Ford Fishman
 
 import Phage; import Population; import Strain
-import pandas as pd
+import general as gen
+from Enums import Mutation, Type
+import pandas as pd; import numpy as np
 ##########################################################################################################
 
 class Community():
@@ -61,23 +63,27 @@ class Community():
 
     def phagePopOverTime(self):
         return self.__phagePopOverTime
+    
+    def phages(self):
+        """Remove, only using for testing"""
+        return self.__phages
 
 ##########################################################################################################
 
     """
     Main timestep function
     """
-    def timestep(self, aH:float, bH:float, c:float, y:float, bP:float, absP:float, dP:float, pS:float):
+    def timestep(self, aH:float, bH:float, c:float, y:float, bP:float, absP:float, dP:float, pS:float, m:float):
         """
         N (int): total community size
         a (float): competition coefficient
         b (float): intrinsic growth rate
         c (float): cost of crispr
         y (float):
-        bP (float):
-        absP (float):
-        dP (float):
-        pS (float): probability of spacer forming during infection
+        bP (float): phage birth rate
+        absP (float): aborption rate of phage
+        dP (float): decay rate of phage
+        pS (float): probability of spacer forming during infection per host
         """
         # tHost=0 # for testing
 
@@ -89,31 +95,52 @@ class Community():
             p = self.infectingPhages(pop)
             # p = self.__phagePopOverTime[-1] 
             # print("Phages:\t"+str(p))
-            # p = self.phagesPopDict()
 
-            pops[popName].timestep(N=self.totalComSize(),a=aH,b=bH,c=c,y=y,absP=absP,p=p)
+            pops[popName].timestep(N=self.totalComSize(),a=aH,b=bH,c=c,y=y,absP=absP,p=p, pS=pS)
+
+        newPhages = list()
+        extinctPhageNames = set()
 
         for phageName, phage in phages.items(): 
 
-            totalHosts = self.totalVulnerable(phageName)
+            if phage.pop() == 0: # remove extinct phages from community
+                extinctPhageNames.add(phageName)
+                continue
+
+            Ns = self.totalVulnerable(phageName)
             # totalHosts = self.__totalComSize 
             
             # print("Hosts:\t"+str(totalHosts))
             # print(self.__totalComSize)
             # print(self.__populations["pop1"].getStrain("s1").isVulnerable(phage.receptor().name()))
             # print(self.vulnerableStrains(phage.genome(), phage.receptor()))
-            phages[phageName].timestep(Ns=totalHosts, bP=bP, absP=absP, dP=dP)
+            phages[phageName].timestep(Ns=Ns, bP=bP, absP=absP, dP=dP)
 
+            lam = absP * bP * Ns * phage.pop() * m 
+            # print("E[mut]:\t"+str(lam))
+            if lam == 0:
+                continue
+
+            newPhages = [*newPhages, *self.phageMutation(absP * bP * Ns * phage.pop() * m, phage=phage)]
+            
+
+            
             # self.__populations[popName].timestep(N,aH,bH,c,y,absP,p=self.phagesPopDict())
             
             # print(str(bH-absP*p))
             # vStrains = self.vulnerableStrains( phage.genome(), phage.receptor().name() )
+        # print(len(newPhages))
+        newPhages_dict = {phage.name():phage for phage in newPhages}
 
+        # print("New phages:\t" + str(len(newPhages_dict)))
+        phages.update(newPhages_dict)
+        finalPhages = {phageName:phage for phageName,phage in phages.items() if not phageName in extinctPhageNames}
+        # print(phages)
         self.__populations = pops
-        self.__phages = phages
+        self.__phages = finalPhages
         self.__updateComSize()
         self.__updateStrainPhageDF()
-        # print(self.__StrainPhageDF)
+
         return None
 
 ##########################################################################################################
@@ -137,7 +164,7 @@ class Community():
 
         return vStrains
 
-    def totalVulnerable(self, phageName:str):
+    def totalVulnerable(self, phageName:str) -> float:
         """returns the total number of vulnerable hosts to a specific phage"""
         # pops = self.__populations
         total = 0
@@ -154,7 +181,7 @@ class Community():
 
     def infectingPhages(self, pop:Population):
         """
-        Return the number of phages that infect each strain in pop (dict) 
+        Return the phages that infect each strain in pop (dict) 
         """
         phages = dict() # dict of strainName: Array of bools
         strainNames = set(pop.strains().keys())
@@ -163,8 +190,9 @@ class Community():
 
             if strainName in strainNames:
 
-                phageTotal = [self.phagesPopDict()[phageName] for phageName,infects in row.items() if infects]
-                phages[strainName] = sum(phageTotal)
+                # phageTotal = [self.phagesPopDict()[phageName] for phageName,infects in row.items() if infects]
+                # phages[strainName] = sum(phageTotal)
+                phages[strainName] = {phageName:self.__phages[phageName] for phageName, infects in row.items() if infects}
 
         return phages
 
@@ -176,6 +204,23 @@ class Community():
         popDict = {phageName:phage.pop() for phageName, phage in phages.items()}
 
         return popDict
+
+    @gen.runProcess
+    def phageMutation(self, *args, phage:Phage=None, num:int=0) -> Phage:
+        """
+        """
+        if phage is None:
+
+            raise KeyError("Need to specify strain name and phage")
+
+        newGenome = phage.mutate(Mutation.SNP)
+        newName = gen.generateName(Type.PHAGE, num = len(self.__phages)+num)
+        fitness = np.random.uniform() # some cost to mutating genome
+
+        newPhage = Phage.Phage(name=newName, receptor=phage.receptor(),genome=newGenome, fitness = fitness)
+        
+        return newPhage
+
 
 
     
@@ -226,6 +271,8 @@ class Community():
         self.__StrainPhageDF = df
 
         return None
+
+
 ##########################################################################################################
     
 """
@@ -255,7 +302,10 @@ for x,y in a.iterrows():
 # print(a["a"])
 # print(a.loc[0]["a"])
 
-c = list(range(0,5))
-print(
-    # [x for x in c if x!=3]
-)
+# c = list(range(0,5))
+# print(
+#     # [x for x in c if x!=3]
+# )
+
+d = np.random.poisson(0.1*20, 10)
+# print(d)

@@ -13,18 +13,19 @@ import Phage; import PhageReceptor; import Crispr
 Parameters
 """
 
-timesteps = 5
+timesteps = 10
 # host parameters
-pS = 0.001 # prob of spacer forming if infection occurs
-bH = 100 # initial max intrinsic growth of hosts
-aH = 100000 # region where density dependence sets in for hosts
+pS = 0.01 # prob of spacer forming if infection occurs per host
+bH = 5 # initial max intrinsic growth of hosts
+aH = 1000 # region where density dependence sets in for hosts
 y = 1 # rate of density dependence setting in around a, y = 1 makes classic beverton holt 
 crisprCost = 0.1 # fitness cost of having active CRISPR system
 
 # phage parameters
-bP = 3 # burst size of phage
+bP = 10 # burst size of phage
 absP = 0.01 # absorbtion rate of phage
 dP = 0.1 # natural decay rate of phage
+m = 10**-3
 
 """
 Functions called by main
@@ -45,13 +46,14 @@ def initialize():
         phReceptors = {
             receptor1.name():receptor1
             },
-        pop = 1000
+        pop = 100
     )
 
     phage1 = Phage.Phage(
         name = "p" + "1",
         receptor = receptor1,
-        pop = 1
+        pop = 10,
+        genomeLength=100
     )
 
 
@@ -79,11 +81,6 @@ def initialize():
 
 #     return community
 
-
-def generateName(type:str, num):
-    """Make names for different objects of different classes"""
-
-    return None
     
 """
 Main function for running simulation
@@ -91,7 +88,7 @@ Main function for running simulation
 def main():
 
     """
-    have to think about where phage information should be accessed
+    Implement __add__, __str__, and __repr__ at some point
     """
 
     community = initialize()
@@ -100,13 +97,21 @@ def main():
 
         
         # community.getPopulation("pop1").getStrain("s1").timestep(N,a,b,crisprCost)
-        community.timestep(aH=aH,bH=bH, c=crisprCost, y=y, bP=bP, absP=absP, dP=dP, pS=pS)
+        community.timestep(aH=aH,bH=bH, c=crisprCost, y=y, bP=bP, absP=absP, dP=dP, pS=pS, m=m)
 
     # print(community.totalVulnerable(community.getPhage("p1").genome(), "r1"))
-    N = community.comSizeOverTime() # community size
-    P = community.phagePopOverTime()
-    print(N)
-    print(P)
+    N = str(community.comSizeOverTime()) # community size
+    P = str(community.phagePopOverTime())
+    print("hosts:\t"+N)
+    print("phages:\t"+P)
+    print(
+        len(community.getPopulation("pop1").strains())
+        )
+    print(
+        len(community.phagesPopDict())
+        )
+    # for phage in community.phages().values():
+    #     print(phage.genome())
     # print("strain nam")
     # print(community.getPopulation("pop1").getStrain("s1").name())
     return None

@@ -62,8 +62,8 @@ class Crispr():
     def newSpacer(self, genome:str):
         """Make a new spacer based on the incoming DNA"""
         inds = [ i for i in range( 0, len(genome) - self.__spacerLength ) ] # all possible starting spots for a new spacer
-        i = np.random.choice(inds)
-        self.__spacers.add(genome[i : i + self.__spacerLength])
+        i = int(np.random.choice(inds))
+        self.__spacers.add(genome[i : (i + self.__spacerLength)])
 
         self.__updateCost() # check to see if there is a cost to the CRISPR now
 

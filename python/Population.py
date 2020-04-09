@@ -2,6 +2,7 @@
 
 import numpy as np
 import Strain; import Phage; import PhageReceptor; import Crispr
+import general as gen; from Enums import Type
 
 ##########################################################################################################
 
@@ -50,24 +51,48 @@ class Population():
     Main timestep function
     """
 
-    def timestep(self, N:int, a:float, b:float, c:float,  y:float, absP:float, p:dict):
+    def timestep(self, N:int, a:float, b:float, c:float,  y:float, absP:float, p:dict, pS:float):
         """
         N (int): total community size
         a (float): competition coefficient
         b (float): intrinsic growth rate
         c (float): cost of crispr
         """
-        
-        for strainName in self.__strains:
+        strains = self.__strains
+        newStrains = list()
+        extinctStrainNames = set()
+
+        for strainName,strain in strains.items():
+
+            if strain.pop() == 0:
+                extinctStrainNames.add(strainName)
+                continue
 
         #     p = self.__totalPhages( 
         #         phageSet = self.__phageSet[strainName],
         #         phageDict = p
         # )
-            phageTotal = p[strainName] # the number of infecting phages per strain
-
+            phages = p[strainName] # the phages infecting this phage
+            phageTotalList = [phage.pop() for phage in phages.values()]
+            phageTotal = sum(phageTotalList) # the number of infecting phages per strain
+            # print(phageTotal)
             self.__strains[strainName].timestep(N=N,a=a,b=b,c=c,y=y,absP=absP,p=phageTotal)
 
+            for phage in phages.values():
+
+                lam = absP*phage.pop()*strain.pop()*pS # number of expected events depends on strain and phage densities
+                # numSpacers = np.random.poisson(lam=lam) 
+                # print(lam)
+                if lam == 0:
+                    continue
+                # newStrains.update( self.newSpacer(strainName, phage, numSpacers) )
+                newStrains = [*newStrains, *self.newSpacer(lam,strainName=strainName, phage=phage) ]
+
+        newStrains_dict = {newStrain.name():newStrain for newStrain in newStrains}
+        strains.update(newStrains_dict)
+        finalStrains = {strainName:strain for strainName,strain in strains.items() if not strainName in extinctStrainNames}
+        self.__strains = finalStrains
+        
         self.__updatePopSize() # re-calculate population size
 
         return None
@@ -116,25 +141,57 @@ class Population():
 
         return None
 
-    def newSpacer(self, strainName:str, newStrainName:str, phage:Phage):
+    # def newSpacer(self, strainName:str, phage:Phage, numSpacers:int=1):
+
+    #     """Adds a new strain based on another but with a new spacer"""
+
+    #     strain = self.getStrain(strainName)
+    #     crispr = strain.crispr() 
+    #     i = 0
+    #     newStrains = dict()
+
+    #     while i < numSpacers:
+
+    #         i += 1
+
+    #         crispr.newSpacer( genome = phage.genome() ) # generate a new spacer based on phage genome
+            
+    #         newName = gen.generateName(Type.STRAIN, len(self.__strains)+1)
+
+    #         newStrain = Strain.Strain( # organism with new spacer is a new strain, one starting cell
+    #             name=newName,
+    #             crispr=crispr,
+    #             phReceptors=strain.phReceptors()
+    #         )
+
+    #         newStrains[newName] = newStrain
+
+    #     # self.__updatePopSize() # re-calculate population size
+
+    #     return newStrains
+    @gen.runProcess
+    def newSpacer(self, *args, strainName:str="", phage:Phage=None, num:int=0):
 
         """Adds a new strain based on another but with a new spacer"""
 
+        if strainName=="" or phage is None:
+            raise KeyError("Need to specify strain name and phage")
+
+
         strain = self.getStrain(strainName)
         crispr = strain.crispr() 
+
         crispr.newSpacer( genome = phage.genome() ) # generate a new spacer based on phage genome
+            
+        newName = gen.generateName(Type.STRAIN, len(self.__strains)+1)
 
         newStrain = Strain.Strain( # organism with new spacer is a new strain, one starting cell
-            name=newStrainName,
+            name=newName,
             crispr=crispr,
             phReceptors=strain.phReceptors()
         )
 
-        self.__strains[newStrainName] = newStrain
-
-        self.__updatePopSize() # re-calculate population size
-
-        return None
+        return newStrain
     # mutations of receptors, new spacers?
 
     def receptorMod(self, strainName:str, newStrainName:str, newReceptorName:str):

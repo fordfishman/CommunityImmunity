@@ -2,6 +2,8 @@
 
 import numpy as np
 import PhageReceptor; import Population
+from Enums import Mutation
+import general as gen
 
 NUCLEOTIDES = ("A","C","G","T") # tuple of nucleotides
 
@@ -19,11 +21,12 @@ class Phage():
     # strains (set(str)): set of strains this phage can infect
     """
 
-    def __init__(self, name:str, receptor:PhageReceptor, genome:str = None, genomeLength:int = 100, pop:float = 1):
+    def __init__(self, name:str, receptor:PhageReceptor, genome:str = None, genomeLength:int = 100, pop:float = 1, fitness:float = 1):
 
         self.__name = name
         self.__pop = pop
         self.__receptor = receptor
+        self.__fitness = fitness
         # self.__strains = set()
         # self.__targetPop = targetPop
 
@@ -32,7 +35,7 @@ class Phage():
 
         else: # Generates a pseudo-genome for the phage
             # Essentially provides it with pseudo-spacers
-            self.__genome = np.random.choice(NUCLEOTIDES, size=genomeLength, replace=True)
+            self.__genome = "".join(np.random.choice(NUCLEOTIDES, size=genomeLength, replace=True))
 
 ##########################################################################################################
 
@@ -50,9 +53,9 @@ class Phage():
 
         Np = self.__pop # phage pop
 
-        self.__pop += absP*(bP-1)*Ns*Np - dP*Np
+        self.__pop += absP*(bP-1)*Ns*Np*self.__fitness - dP*Np
 
-        if self.__pop < 1: self.__pop = 1
+        if self.__pop < 1: self.__pop = 0
         return None
 
 ##########################################################################################################
@@ -81,8 +84,46 @@ class Phage():
     Other functions
     """
 
+    @gen.dispatch_on_value
+    def mutate(self, mutation) -> str:
+        pass # only runs if a mutation occurs that's not in thhe class
+        
+
+    @mutate.register(Mutation.SNP)
+    def _(self, mutation) -> str:
+        # print(self.__genome)
+        nt = np.random.choice(NUCLEOTIDES) # the new nucleotide
+
+        gLength = len(self.__genome) # genome length
+        i = np.random.choice( range(0, gLength) )
+        # make genome into a list to change position
+        genomeList = list(self.__genome) 
+        genomeList[i] = nt
+        newGenome = "".join(genomeList)
+        # print(newGenome)
+        return newGenome
+
+    @mutate.register(Mutation.DELETION)
+    def _(self, mutation) -> str:
+        
+        gLength = len(self.__genome) # genome length
+        i = np.random.choice( range(0, gLength) )
+        # make genome into a list to delete position
+        genomeList = list(self.__genome)
+        genomeList.pop(i)
+        newGenome = "".join(genomeList)
+
+        return newGenome
+
+
+
 ##########################################################################################################
 
     """
     think about making spacers of variable cost
     """
+"""
+print testing
+"""
+a = "".join(np.random.choice(NUCLEOTIDES, size=20, replace=True))
+# print(len(a))
