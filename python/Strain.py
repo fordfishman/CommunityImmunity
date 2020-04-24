@@ -48,6 +48,9 @@ class Strain():
 
     def crispr(self):
         return self.__crispr
+    
+    def crisprLength(self):
+        return len(self.__crispr)
 
     def pop(self):
         return self.__pop

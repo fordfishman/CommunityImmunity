@@ -31,6 +31,8 @@ class Crispr():
     """
     Attribute Functions
     """
+    def __len__(self):
+        return len(self.__spacers)
 
     def hasSpacer(self, genome:str):
         """Only checks for single match"""

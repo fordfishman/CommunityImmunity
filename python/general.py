@@ -15,7 +15,10 @@ import numpy as np
 
 def generateName(type:Type, num):
     """Make names for different objects of different classes"""
-    name = type.value + str(num)
+    # name = type.value + str(num)
+    nums = range(0,10)
+    idList = np.random.choice(nums, size=10, replace=True)
+    name = type.value + "".join( map(str,idList) )
     return name
 
 
@@ -59,12 +62,13 @@ def runProcess(func):
     """
     runs a function based on an expected number of times
     The actual number of times the process is run depends on 
-    a poisson process, where lam is the product of the args
+    a binomial process, where n is the number of interactions, 
+    and p is the probability the process is run per interaction
     """
     def wrapper(*args,**kw):
 
-        lam = 1.0 # default expected number of events
-
+        n = 1.0 # default expected number of events
+        p = kw["p"]
         item_list = list()
 
         for num in args[1:len(args)]:
@@ -76,17 +80,17 @@ def runProcess(func):
 
             #     print("Arg {} not tranformable to float. Treating as 1.0.".format(num))
             #     print()
-            #     num = 1.0 # if arg is not a number, it won't modify lam
+            #     num = 1.0 # if arg is not a number, it won't modify n
 
             # else: 
             #     num = float(num)
 
             # finally: 
-            # print(num)
-            lam *= num 
-        if lam > 0:
+            #     print(num)
+            n *= num 
+        if n > 0:
             
-            numEvents = np.random.poisson(lam) 
+            numEvents = np.random.binomial(n,p) 
             # print(str(lam) + " -> " + str(numEvents))
             # print(numEvents)
             # i = 0 # for iteration
@@ -143,12 +147,15 @@ def testFunc(*args, b=""):
 
 #         return newGenome
 
-# b = Test()
-
-# print(b.mutate(Mutation.DELETION, "asd"))
-
-
-# print(Type.RECEPTOR.name)
-# print(Type.RECEPTOR.value)
-# for type in Type:
-#
+a = range(0,10)
+N=10**6
+P=10**7
+ab=10**-7
+m=10**-5
+lam = N*P*ab*m
+n = N*P*ab
+# def run(**kw):
+#     print(kw["p"])
+# run(p=1)
+# print(np.random.poisson(lam =lam, size = 10))
+# print(np.random.binomial(n=n,p=m,size=10))

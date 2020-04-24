@@ -4,28 +4,38 @@
 Modules
 """
 
-import numpy as np
+import numpy as np; import pandas as pd
+import argparse
 import Strain; import Population; import Community 
 import Phage; import PhageReceptor; import Crispr
 
+"""
+Setting up arguments
+"""
+parser = argparse.ArgumentParser()
+parser.add_argument('-o','--output', default = 'comim', help = "Desired name of output path")
+arguments = parser.parse_args()
+out = arguments.output
 
 """
 Parameters
 """
+outputMain = out + "_main.csv"
+outputRichness = out + "_richness.csv"
 
-timesteps = 10
+timesteps = 500
 # host parameters
-pS = 0.01 # prob of spacer forming if infection occurs per host
-bH = 5 # initial max intrinsic growth of hosts
-aH = 1000 # region where density dependence sets in for hosts
+pS = 10**-6 # prob of spacer forming if infection occurs per host
+bH = 1.2 # initial max intrinsic growth of hosts
+aH = 10**6 # region where density dependence sets in for hosts
 y = 1 # rate of density dependence setting in around a, y = 1 makes classic beverton holt 
 crisprCost = 0.1 # fitness cost of having active CRISPR system
 
 # phage parameters
-bP = 10 # burst size of phage
-absP = 0.01 # absorbtion rate of phage
+bP = 20 # burst size of phage
+absP = 10**-7 # absorbtion rate of phage
 dP = 0.1 # natural decay rate of phage
-m = 10**-3
+m = 10**-5
 
 """
 Functions called by main
@@ -46,14 +56,14 @@ def initialize():
         phReceptors = {
             receptor1.name():receptor1
             },
-        pop = 100
+        pop = 100000
     )
 
     phage1 = Phage.Phage(
         name = "p" + "1",
         receptor = receptor1,
-        pop = 10,
-        genomeLength=100
+        pop = 100000,
+        genomeLength=1000
     )
 
 
@@ -93,29 +103,57 @@ def main():
 
     community = initialize()
     N = community.totalComSize() # community size
+    pRichness = [len( community.phagesPopDict() )] # phage richness over time
+    sRichness = [1] # strain richness over time
+    cRichness = list() # spacer richness over time (list of lists)
+
+
     for i in range(timesteps): # run for # of timesteps
-
         
-        # community.getPopulation("pop1").getStrain("s1").timestep(N,a,b,crisprCost)
         community.timestep(aH=aH,bH=bH, c=crisprCost, y=y, bP=bP, absP=absP, dP=dP, pS=pS, m=m)
+        pRichness.append( len( community.phagesPopDict() ) )
+        sRichness.append( community.richness() )
+        cRichness.append( community.spacerRichness() )
 
-    # print(community.totalVulnerable(community.getPhage("p1").genome(), "r1"))
+
     N = str(community.comSizeOverTime()) # community size
     P = str(community.phagePopOverTime())
-    print("hosts:\t"+N)
-    print("phages:\t"+P)
-    print(
-        len(community.getPopulation("pop1").strains())
+    # print("hosts:\t"+N)
+    # print("phages:\t"+P)
+    print("Strains:")
+    print(sRichness[-1])
+    print("Phages:")
+    print(pRichness[-1])
+    # print("Spacers:")
+    # print(cRichness)
+
+    df1 = pd.DataFrame( 
+        list( 
+            zip(
+                community.comSizeOverTime(), 
+                community.phagePopOverTime(), 
+                range(1,timesteps+1), 
+                ) 
+            ),
+        columns= ['host','phage','time'],
         )
-    print(
-        len(community.phagesPopDict())
+    # cols = [ "strain"+str(i) for i in range(0,len(cRichness)) ]
+    df2 = pd.DataFrame( 
+        list( 
+            zip(
+                sRichness,
+                pRichness,
+                range(1,timesteps+1)
+             ) 
+            ),
+        columns= ['HostRichness','PhageRichness','time'],
         )
+
+    df1.to_csv(outputMain)
+    df2.to_csv(outputRichness)
     # for phage in community.phages().values():
     #     print(phage.genome())
-    # print("strain nam")
-    # print(community.getPopulation("pop1").getStrain("s1").name())
     return None
-
 
 """
 Execute main function

@@ -45,6 +45,14 @@ class Population():
     def phageSet(self):
         return self.__phageSet
 
+    def richness(self):
+        return len(self.__strains)
+    
+    def spacerRichness(self)->list:
+        """each strain has a value"""
+        strains = self.__strains.values()
+        return [ strain.crisprLength() for strain in strains ]
+
 ##########################################################################################################
 
     """
@@ -68,25 +76,20 @@ class Population():
                 extinctStrainNames.add(strainName)
                 continue
 
-        #     p = self.__totalPhages( 
-        #         phageSet = self.__phageSet[strainName],
-        #         phageDict = p
-        # )
             phages = p[strainName] # the phages infecting this phage
             phageTotalList = [phage.pop() for phage in phages.values()]
             phageTotal = sum(phageTotalList) # the number of infecting phages per strain
-            # print(phageTotal)
+            
             self.__strains[strainName].timestep(N=N,a=a,b=b,c=c,y=y,absP=absP,p=phageTotal)
 
             for phage in phages.values():
 
-                lam = absP*phage.pop()*strain.pop()*pS # number of expected events depends on strain and phage densities
-                # numSpacers = np.random.poisson(lam=lam) 
-                # print(lam)
-                if lam == 0:
+                n = absP*phage.pop()*strain.pop() # number of infections
+
+                if n == 0:
                     continue
-                # newStrains.update( self.newSpacer(strainName, phage, numSpacers) )
-                newStrains = [*newStrains, *self.newSpacer(lam,strainName=strainName, phage=phage) ]
+                
+                newStrains = [*newStrains, *self.newSpacer(n,p=pS,strainName=strainName, phage=phage) ]
 
         newStrains_dict = {newStrain.name():newStrain for newStrain in newStrains}
         strains.update(newStrains_dict)
@@ -141,36 +144,8 @@ class Population():
 
         return None
 
-    # def newSpacer(self, strainName:str, phage:Phage, numSpacers:int=1):
-
-    #     """Adds a new strain based on another but with a new spacer"""
-
-    #     strain = self.getStrain(strainName)
-    #     crispr = strain.crispr() 
-    #     i = 0
-    #     newStrains = dict()
-
-    #     while i < numSpacers:
-
-    #         i += 1
-
-    #         crispr.newSpacer( genome = phage.genome() ) # generate a new spacer based on phage genome
-            
-    #         newName = gen.generateName(Type.STRAIN, len(self.__strains)+1)
-
-    #         newStrain = Strain.Strain( # organism with new spacer is a new strain, one starting cell
-    #             name=newName,
-    #             crispr=crispr,
-    #             phReceptors=strain.phReceptors()
-    #         )
-
-    #         newStrains[newName] = newStrain
-
-    #     # self.__updatePopSize() # re-calculate population size
-
-    #     return newStrains
     @gen.runProcess
-    def newSpacer(self, *args, strainName:str="", phage:Phage=None, num:int=0):
+    def newSpacer(self, *args, p:float=0, strainName:str="", phage:Phage=None, num:int=0):
 
         """Adds a new strain based on another but with a new spacer"""
 

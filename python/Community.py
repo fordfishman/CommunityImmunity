@@ -1,8 +1,7 @@
 ## Ford Fishman
 
 import Phage; import Population; import Strain
-import general as gen
-from Enums import Mutation, Type
+import general as gen; from Enums import Mutation, Type
 import pandas as pd; import numpy as np
 ##########################################################################################################
 
@@ -52,8 +51,6 @@ class Community():
         else: 
             return self.__phages[phageName]
     
-    # def k(self):
-    #     return self.__k
 
     def totalComSize(self):
         return self.__totalComSize
@@ -67,6 +64,25 @@ class Community():
     def phages(self):
         """Remove, only using for testing"""
         return self.__phages
+
+    def richness(self)->int:
+        """Returns strain richness for entire community"""
+        richness = 0
+
+        for pop in self.__populations.values():
+            richness += pop.richness()
+
+        return richness
+
+    def spacerRichness(self)->list:
+        """per species spacer richness"""
+        pops = self.__populations.values()
+
+        return [ pop.spacerRichness() for pop in pops ] 
+
+
+
+
 
 ##########################################################################################################
 
@@ -116,12 +132,12 @@ class Community():
             # print(self.vulnerableStrains(phage.genome(), phage.receptor()))
             phages[phageName].timestep(Ns=Ns, bP=bP, absP=absP, dP=dP)
 
-            lam = absP * bP * Ns * phage.pop() * m 
+            n = absP * bP * Ns * phage.pop() # number of new phages
             # print("E[mut]:\t"+str(lam))
-            if lam == 0:
+            if n == 0:
                 continue
 
-            newPhages = [*newPhages, *self.phageMutation(absP * bP * Ns * phage.pop() * m, phage=phage)]
+            newPhages = [*newPhages, *self.phageMutation(absP * bP * Ns * phage.pop(), p=m, phage=phage)]
             
 
             
@@ -206,7 +222,7 @@ class Community():
         return popDict
 
     @gen.runProcess
-    def phageMutation(self, *args, phage:Phage=None, num:int=0) -> Phage:
+    def phageMutation(self, *args, p:float=0, phage:Phage=None, num:int=0) -> Phage:
         """
         """
         if phage is None:
@@ -215,7 +231,8 @@ class Community():
 
         newGenome = phage.mutate(Mutation.SNP)
         newName = gen.generateName(Type.PHAGE, num = len(self.__phages)+num)
-        fitness = np.random.uniform() # some cost to mutating genome
+        # fitness = np.random.uniform(0,1.2) # some cost to mutating genome
+        fitness = 1
 
         newPhage = Phage.Phage(name=newName, receptor=phage.receptor(),genome=newGenome, fitness = fitness)
         
