@@ -1,5 +1,6 @@
 ## Ford Fishman
 
+from copy import copy, deepcopy
 import Phage; import Population; import Strain
 import general as gen; from Enums import Mutation, Type
 import pandas as pd; import numpy as np
@@ -19,6 +20,8 @@ class Community():
         self.__phages = phages
         self.__comSizeOverTime = list()
         self.__phagePopOverTime = list()
+        self.__resOverTime = list()
+        self.__vulnOverTime = list()
         self.__updateComSize()
         self.__updateStrainPhageDF()
 
@@ -57,6 +60,12 @@ class Community():
 
     def comSizeOverTime(self):
         return self.__comSizeOverTime
+    
+    def resOverTime(self):
+        return self.__resOverTime
+    
+    def vulnOverTime(self):
+        return self.__vulnOverTime
 
     def phagePopOverTime(self):
         return self.__phagePopOverTime
@@ -103,59 +112,57 @@ class Community():
         """
         # tHost=0 # for testing
 
-        pops = self.__populations
-        phages = self.__phages
+        pops = deepcopy(self.__populations)
+        phages = deepcopy(self.__phages)
+        totalResistant = 0
+        totalVulnerable = 0
 
         for popName, pop in pops.items():
 
             p = self.infectingPhages(pop)
-            # p = self.__phagePopOverTime[-1] 
-            # print("Phages:\t"+str(p))
 
             pops[popName].timestep(N=self.totalComSize(),a=aH,b=bH,c=c,y=y,absP=absP,p=p, pS=pS)
+            totalResistant += pop.resSize()
+            totalVulnerable += pop.vulnSize()
 
         newPhages = list()
         extinctPhageNames = set()
 
+        # ind = 0
+        # phageGenomes = set()
+
         for phageName, phage in phages.items(): 
 
+            # phageGenomes.add(phage.genome())
             if phage.pop() == 0: # remove extinct phages from community
                 extinctPhageNames.add(phageName)
                 continue
 
-            Ns = self.totalVulnerable(phageName)
-            # totalHosts = self.__totalComSize 
-            
-            # print("Hosts:\t"+str(totalHosts))
-            # print(self.__totalComSize)
-            # print(self.__populations["pop1"].getStrain("s1").isVulnerable(phage.receptor().name()))
-            # print(self.vulnerableStrains(phage.genome(), phage.receptor()))
+            Ns = self.totalVulnerable(phageName) # hosts vulnerable to this phage
+
+
             phages[phageName].timestep(Ns=Ns, bP=bP, absP=absP, dP=dP)
 
             n = absP * bP * Ns * phage.pop() # number of new phages
-            # print("E[mut]:\t"+str(lam))
+
             if n == 0:
                 continue
 
-            newPhages = [*newPhages, *self.phageMutation(absP * bP * Ns * phage.pop(), p=m, phage=phage)]
-            
+            newPhages = [*newPhages, *self.phageMutation(absP, bP, Ns, phage.pop(), p=m, phage=deepcopy(phage))]
 
-            
-            # self.__populations[popName].timestep(N,aH,bH,c,y,absP,p=self.phagesPopDict())
-            
-            # print(str(bH-absP*p))
-            # vStrains = self.vulnerableStrains( phage.genome(), phage.receptor().name() )
-        # print(len(newPhages))
+        # print(len(phageGenomes))
+        # print(len(self.__phages))
         newPhages_dict = {phage.name():phage for phage in newPhages}
 
-        # print("New phages:\t" + str(len(newPhages_dict)))
         phages.update(newPhages_dict)
         finalPhages = {phageName:phage for phageName,phage in phages.items() if not phageName in extinctPhageNames}
-        # print(phages)
+
         self.__populations = pops
         self.__phages = finalPhages
         self.__updateComSize()
         self.__updateStrainPhageDF()
+        self.__resOverTime.append(totalResistant)
+        self.__vulnOverTime.append(totalVulnerable)
 
         return None
 
@@ -199,15 +206,13 @@ class Community():
         """
         Return the phages that infect each strain in pop (dict) 
         """
-        phages = dict() # dict of strainName: Array of bools
+        phages = dict() # dict of phageName:phage
         strainNames = set(pop.strains().keys())
 
         for strainName, row in self.__StrainPhageDF.iterrows():
 
             if strainName in strainNames:
 
-                # phageTotal = [self.phagesPopDict()[phageName] for phageName,infects in row.items() if infects]
-                # phages[strainName] = sum(phageTotal)
                 phages[strainName] = {phageName:self.__phages[phageName] for phageName, infects in row.items() if infects}
 
         return phages
@@ -231,8 +236,10 @@ class Community():
 
         newGenome = phage.mutate(Mutation.SNP)
         newName = gen.generateName(Type.PHAGE, num = len(self.__phages)+num)
-        # fitness = np.random.uniform(0,1.2) # some cost to mutating genome
-        fitness = 1
+        mod = phage.fitness()
+        # mod = 1 
+        fitness = np.random.uniform(0,1.1) * mod # some cost to mutating genome
+        # fitness = 1
 
         newPhage = Phage.Phage(name=newName, receptor=phage.receptor(),genome=newGenome, fitness = fitness)
         

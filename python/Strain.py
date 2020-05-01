@@ -16,7 +16,7 @@ class Strain():
     intrinsicFitness (float)
     phages (set(str)): names of phages this strain can be infected by
     """
-    def __init__(self, name:str, crispr:Crispr.Crispr = None, phReceptors:dict = None, pop:float = 1):
+    def __init__(self, name:str, crispr:Crispr= None, phReceptors:dict = None, pop:float = 1):
         self.__name = name
         self.__crispr = crispr
         self.__phReceptors = phReceptors
@@ -76,7 +76,7 @@ class Strain():
         y (float):
         """
 
-        if not self.__hasCost(): # set cost to 0 if strain does not have CRISPR-associated cost
+        if not self.hasCost(): # set cost to 0 if strain does not have CRISPR-associated cost
             c = 0
 
         # fitness
@@ -92,6 +92,12 @@ class Strain():
     """
     Other functions
     """
+    def addSpacer(self,spacer:str):
+        if not self.__crispr is None:
+
+            self.__crispr.addSpacer(spacer)
+        return None
+        
 
     def isVulnerable(self, receptor:str): 
         """Does this strain have the phage receptor to be vulnerable to this phage"""
@@ -130,6 +136,16 @@ class Strain():
         self.__phReceptors.pop(receptorName)
         
         return None
+
+    def hasCost(self):
+        """Is there a CRISPR-associated cost to this strain?"""
+        cost = False # initialize cost to be 0
+
+        if not self.__crispr is None: # if strain has a crispr 
+
+            cost = self.__crispr.hasCost()
+
+        return cost
     # def changeReceptorActivity(self, receptorName:str, active:bool):
 
     #     phReceptors = self.__phReceptors
@@ -156,15 +172,7 @@ class Strain():
     Private methods
     """
 
-    def __hasCost(self):
-        """Is there a CRISPR-associated cost to this strain?"""
-        cost = False # initialize cost to be 0
-
-        if not self.__crispr is None: # if strain has a crispr 
-
-            cost = self.__crispr.hasCost()
-
-        return cost
+    
         
         
 

@@ -6,8 +6,8 @@ Modules
 
 import numpy as np; import pandas as pd
 import argparse
-import Strain; import Population; import Community 
-import Phage; import PhageReceptor; import Crispr
+import Strain; import Population; import Community; import Phage; import PhageReceptor; import Crispr
+import general as gen
 
 """
 Setting up arguments
@@ -23,16 +23,16 @@ Parameters
 outputMain = out + "_main.csv"
 outputRichness = out + "_richness.csv"
 
-timesteps = 500
+timesteps = 1000
 # host parameters
 pS = 10**-6 # prob of spacer forming if infection occurs per host
 bH = 1.2 # initial max intrinsic growth of hosts
-aH = 10**6 # region where density dependence sets in for hosts
+aH = 10**7 # region where density dependence sets in for hosts
 y = 1 # rate of density dependence setting in around a, y = 1 makes classic beverton holt 
 crisprCost = 0.1 # fitness cost of having active CRISPR system
 
 # phage parameters
-bP = 20 # burst size of phage
+bP = 10 # burst size of phage
 absP = 10**-7 # absorbtion rate of phage
 dP = 0.1 # natural decay rate of phage
 m = 10**-5
@@ -63,7 +63,7 @@ def initialize():
         name = "p" + "1",
         receptor = receptor1,
         pop = 100000,
-        genomeLength=1000
+        genomeLength=10**3
     )
 
 
@@ -116,10 +116,10 @@ def main():
         cRichness.append( community.spacerRichness() )
 
 
-    N = str(community.comSizeOverTime()) # community size
-    P = str(community.phagePopOverTime())
-    # print("hosts:\t"+N)
-    # print("phages:\t"+P)
+    N = str(community.comSizeOverTime()[-1]) # community size
+    P = str(community.phagePopOverTime()[-1])
+    print("hosts:\t"+N)
+    print("phages:\t"+P)
     print("Strains:")
     print(sRichness[-1])
     print("Phages:")
@@ -131,11 +131,13 @@ def main():
         list( 
             zip(
                 community.comSizeOverTime(), 
-                community.phagePopOverTime(), 
+                community.phagePopOverTime(),
+                community.resOverTime(),
+                community.vulnOverTime(), 
                 range(1,timesteps+1), 
                 ) 
             ),
-        columns= ['host','phage','time'],
+        columns= ['host','phage','resistant','vulnerable','time'],
         )
     # cols = [ "strain"+str(i) for i in range(0,len(cRichness)) ]
     df2 = pd.DataFrame( 

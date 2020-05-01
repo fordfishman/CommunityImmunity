@@ -5,9 +5,9 @@
 sourcepath=/Users/fordfishman/GitHub/CommunityImmunity
 python=$sourcepath/python
 r=$sourcepath/r
-output=$sourcepath/output
+output=$sourcepath/output/labmeeting20200428/m105_pS106_aH_107_fP
 
 # Run main python script
 
-time python3 $python/main.py -o $output/moregraphs1
-# time Rscript $r/plotGraphs.R -f $output/test5.csv -o $output/test5.png
+time python3 $python/main.py -o $output
+time Rscript $r/plotGraphs.R -f $output 

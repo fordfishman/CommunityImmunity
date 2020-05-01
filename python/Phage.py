@@ -75,6 +75,9 @@ class Phage():
     def pop(self):
         return(self.__pop)
 
+    def fitness(self):
+        return(self.__fitness)
+
     # def targetPop(self):
     #     return(self.__targetPop)
 

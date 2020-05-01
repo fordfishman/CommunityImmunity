@@ -1,6 +1,7 @@
 ## Ford Fishman
 
 import numpy as np
+from copy import copy, deepcopy
 import Strain; import Phage; import PhageReceptor; import Crispr
 import general as gen; from Enums import Type
 
@@ -23,6 +24,8 @@ class Population():
         self.__strains = strains
         self.__updatePopSize()
         self.__phageSet = dict()
+        self.__resSize = 0
+        self.__vulnSize = 0
 
 ##########################################################################################################
      
@@ -41,6 +44,12 @@ class Population():
 
     def popSize(self):
         return self.__popSize
+    
+    def resSize(self):
+        return self.__resSize
+    
+    def vulnSize(self):
+        return self.__vulnSize
 
     def phageSet(self):
         return self.__phageSet
@@ -66,21 +75,29 @@ class Population():
         b (float): intrinsic growth rate
         c (float): cost of crispr
         """
-        strains = self.__strains
+        strains = deepcopy(self.__strains)
         newStrains = list()
         extinctStrainNames = set()
+        resSize = 0 
+        vulnSize = 0 # number of vulnerable hosts at this timestep
 
         for strainName,strain in strains.items():
 
             if strain.pop() == 0:
                 extinctStrainNames.add(strainName)
+                print("1 host strain dead")
                 continue
 
-            phages = p[strainName] # the phages infecting this phage
+            phages = p[strainName] # the phages infecting this strain
             phageTotalList = [phage.pop() for phage in phages.values()]
             phageTotal = sum(phageTotalList) # the number of infecting phages per strain
-            
-            self.__strains[strainName].timestep(N=N,a=a,b=b,c=c,y=y,absP=absP,p=phageTotal)
+
+            strains[strainName].timestep(N=N,a=a,b=b,c=c,y=y,absP=absP,p=phageTotal)
+
+            if strain.hasCost():
+                resSize += strains[strainName].pop()
+            else:
+                vulnSize += strains[strainName].pop()
 
             for phage in phages.values():
 
@@ -89,7 +106,7 @@ class Population():
                 if n == 0:
                     continue
                 
-                newStrains = [*newStrains, *self.newSpacer(n,p=pS,strainName=strainName, phage=phage) ]
+                newStrains = [*newStrains, *self.newSpacer(n,p=pS,strain=strain, phage=phage) ]
 
         newStrains_dict = {newStrain.name():newStrain for newStrain in newStrains}
         strains.update(newStrains_dict)
@@ -97,6 +114,8 @@ class Population():
         self.__strains = finalStrains
         
         self.__updatePopSize() # re-calculate population size
+        self.__resSize = resSize
+        self.__vulnSize = vulnSize
 
         return None
 
@@ -108,7 +127,8 @@ class Population():
 
     def vulnerableStrains(self, phageGenome:str, receptor:str):
 
-        strains = self.__strains
+        # strains = deepcopy( self.__strains )
+        strains = self.__strains 
         # vStrains = dict() # dictionary for storing vulnerable strains
         vStrains = set()
 
@@ -136,6 +156,7 @@ class Population():
         """
         
         """
+        # vStrains = deepcopy(self.vulnerableStrains(phageGenome, receptor))
         vStrains = self.vulnerableStrains(phageGenome, receptor)
 
         for strain in vStrains:
@@ -145,26 +166,32 @@ class Population():
         return None
 
     @gen.runProcess
-    def newSpacer(self, *args, p:float=0, strainName:str="", phage:Phage=None, num:int=0):
+    def newSpacer(self, *args, p:float=0, strain:Strain=None, phage:Phage=None, num:int=0):
 
         """Adds a new strain based on another but with a new spacer"""
 
-        if strainName=="" or phage is None:
+        if strain is None or phage is None:
             raise KeyError("Need to specify strain name and phage")
 
+        oldSpacers = deepcopy(strain.crispr().spacers())
+        # oldSpacers = strain.crispr().spacers()
 
-        strain = self.getStrain(strainName)
-        crispr = strain.crispr() 
 
-        crispr.newSpacer( genome = phage.genome() ) # generate a new spacer based on phage genome
+        crispr = Crispr.Crispr( oldSpacers
+        ) 
+
+        spacer = crispr.makeSpacer( genome = phage.genome() ) # generate a new spacer based on phage genome
+        crispr.addSpacer(spacer)
             
         newName = gen.generateName(Type.STRAIN, len(self.__strains)+1)
 
         newStrain = Strain.Strain( # organism with new spacer is a new strain, one starting cell
             name=newName,
             crispr=crispr,
-            phReceptors=strain.phReceptors()
+            phReceptors=strain.phReceptors(),
+            pop = 1.0
         )
+        # newStrain.addSpacer(spacer)
 
         return newStrain
     # mutations of receptors, new spacers?

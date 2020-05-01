@@ -2,4 +2,7 @@
 *.pyo
 *.Rproj*
 .Rhistory
+*test*
+*moregraphs*
+
 

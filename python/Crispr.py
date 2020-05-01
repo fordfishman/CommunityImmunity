@@ -55,17 +55,24 @@ class Crispr():
     def isActive(self):
         return (self.__isActive)
 
+    def spacers(self):
+        return self.__spacers
+
 ##########################################################################################################
 
     """
     Other functions
     """
 
-    def newSpacer(self, genome:str):
+    def makeSpacer(self, genome:str)->str:
         """Make a new spacer based on the incoming DNA"""
         inds = [ i for i in range( 0, len(genome) - self.__spacerLength ) ] # all possible starting spots for a new spacer
         i = int(np.random.choice(inds))
-        self.__spacers.add(genome[i : (i + self.__spacerLength)])
+        return genome[i : (i + self.__spacerLength)]
+
+    def addSpacer(self, spacer:str):
+        
+        self.__spacers.add(spacer)
 
         self.__updateCost() # check to see if there is a cost to the CRISPR now
 

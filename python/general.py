@@ -68,7 +68,14 @@ def runProcess(func):
     def wrapper(*args,**kw):
 
         n = 1.0 # default expected number of events
-        p = kw["p"]
+        try: kw["p"]
+        except KeyError:
+            print("Probability per event p not given. Assigning p=0")
+            p = 0.0
+        else:
+            p = kw["p"]
+        
+        
         item_list = list()
 
         for num in args[1:len(args)]:
@@ -88,7 +95,7 @@ def runProcess(func):
             # finally: 
             #     print(num)
             n *= num 
-        if n > 0:
+        if n > 0 and p>0:
             
             numEvents = np.random.binomial(n,p) 
             # print(str(lam) + " -> " + str(numEvents))
