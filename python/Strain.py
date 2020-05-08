@@ -16,14 +16,20 @@ class Strain():
     intrinsicFitness (float)
     phages (set(str)): names of phages this strain can be infected by
     """
-    def __init__(self, name:str, crispr:Crispr= None, phReceptors:dict = None, pop:float = 1):
+    def __init__(self, name:str, a:float, b:float, c:float, y:float, crispr:Crispr= None, phReceptors:dict = None, pop:float = 1):
         self.__name = name
         self.__crispr = crispr
         self.__phReceptors = phReceptors
         self.__activeReceptors = dict()
         self.__pop = pop
+        self.__ipop = 0 # infected pop
         self.__intrinsicFitness = 1 # CHANGE THIS AT SOME POINT WHEN I ADD IN RESOURCES
         self.__phages = set()
+
+        self.a = a
+        self.b = b
+        self.c = c
+        self.y = y
         
         if not phReceptors is None:
             for receptorName in phReceptors: # for all receptors in a strain
@@ -55,6 +61,9 @@ class Strain():
     def pop(self):
         return self.__pop
 
+    def ipop(self):
+        return self.__ipop
+
     def intrinsicFitness(self):
         return self.__intrinsicFitness
 
@@ -65,26 +74,36 @@ class Strain():
     """
     Main timestep function
     """
-    def timestep(self, N:int, a:float, b:float, c:float, y:float, absP:float, p:float ):
+    def timestep(self, N:int, absP:float):
         """
         N (int): total host density
         a (float): competition coefficient
         b (float): intrinsic growth rate
         c (float): cost of crispr
-        absP (float): absorbance rate of phage to host
+        absP (float): number of absorbed phages per host
         p (float): phage density
         y (float):
         """
 
+        a = self.a
+        b = self.b
+        c = self.c 
+        y = self.y 
+
         if not self.hasCost(): # set cost to 0 if strain does not have CRISPR-associated cost
             c = 0
-
-        # fitness
-        r = b * ( self.__intrinsicFitness - c ) - absP*p
-            # self.__pop = ( b*self.__pop )/( 1 + ( N/a )**y ) # Beverton-Holt Model
+        
+        # fitness 
+        r = b * ( self.__intrinsicFitness - c ) - absP # Beverton-Holt Model
+        
+        self.__ipop += self.__pop*absP - 0.5 * self.__ipop # infected pop 
+            
         # reproduce
         self.__pop = ( r*self.__pop )/( 1 + ( N/a )**y ) 
+
         if self.__pop < 1: self.__pop = 0
+        if self.__ipop < 1: self.__ipop = 0
+
         return None
 
 ##########################################################################################################

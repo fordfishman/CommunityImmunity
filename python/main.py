@@ -26,16 +26,16 @@ outputRichness = out + "_richness.csv"
 timesteps = 1000
 # host parameters
 pS = 10**-6 # prob of spacer forming if infection occurs per host
-bH = 1.2 # initial max intrinsic growth of hosts
-aH = 10**7 # region where density dependence sets in for hosts
+b = 1.2 # initial max intrinsic growth of hosts
+a = 10**6 # region where density dependence sets in for hosts
 y = 1 # rate of density dependence setting in around a, y = 1 makes classic beverton holt 
 crisprCost = 0.1 # fitness cost of having active CRISPR system
 
 # phage parameters
-bP = 10 # burst size of phage
-absP = 10**-7 # absorbtion rate of phage
-dP = 0.1 # natural decay rate of phage
-m = 10**-5
+beta = 30 # burst size of phage
+absp = 10**-7 # absorbtion rate of phage
+d = 0.1 # natural decay rate of phage
+m = 10**-7 # phage mutation rate per nt
 
 """
 Functions called by main
@@ -52,6 +52,10 @@ def initialize():
 
     strain1 = Strain.Strain(
         name = "s" + "1",
+        a = a,
+        b = b,
+        c = crisprCost,
+        y = y,
         crispr = crispr0,
         phReceptors = {
             receptor1.name():receptor1
@@ -61,6 +65,9 @@ def initialize():
 
     phage1 = Phage.Phage(
         name = "p" + "1",
+        absp = absp, 
+        beta = beta, 
+        d = d,
         receptor = receptor1,
         pop = 100000,
         genomeLength=10**3
@@ -107,10 +114,11 @@ def main():
     sRichness = [1] # strain richness over time
     cRichness = list() # spacer richness over time (list of lists)
 
+    timestep = community.timestep
 
     for i in range(timesteps): # run for # of timesteps
         
-        community.timestep(aH=aH,bH=bH, c=crisprCost, y=y, bP=bP, absP=absP, dP=dP, pS=pS, m=m)
+        timestep(pS=pS, m=m)
         pRichness.append( len( community.phagesPopDict() ) )
         sRichness.append( community.richness() )
         cRichness.append( community.spacerRichness() )
@@ -118,15 +126,20 @@ def main():
 
     N = str(community.comSizeOverTime()[-1]) # community size
     P = str(community.phagePopOverTime()[-1])
-    print("hosts:\t"+N)
-    print("phages:\t"+P)
+    print("hosts:\t%s"%(N))
+    print("phages:\t%s"%(P))
     print("Strains:")
     print(sRichness[-1])
     print("Phages:")
     print(pRichness[-1])
     # print("Spacers:")
     # print(cRichness)
-
+    import statistics as stat
+    print("Strain times:")
+    print("max: %s\tmean: %s" % (max(community.strainTimes), stat.mean(community.strainTimes)))
+    print("Phage times:")
+    print("max: %s\tmean: %s" % (max(community.phageTimes), stat.mean(community.phageTimes)))
+    
     df1 = pd.DataFrame( 
         list( 
             zip(

@@ -21,7 +21,7 @@ class Phage():
     # strains (set(str)): set of strains this phage can infect
     """
 
-    def __init__(self, name:str, receptor:PhageReceptor, genome:str = None, genomeLength:int = 100, pop:float = 1, fitness:float = 1):
+    def __init__(self, name:str, absp:float, beta:float, d:float, receptor:PhageReceptor, genome:str = None, genomeLength:int = 100, pop:float = 1, fitness:float = 1):
 
         self.__name = name
         self.__pop = pop
@@ -29,6 +29,10 @@ class Phage():
         self.__fitness = fitness
         # self.__strains = set()
         # self.__targetPop = targetPop
+
+        self.absp = absp
+        self.beta = beta
+        self.d = d
 
         if not genome is None: 
             self.__genome = genome
@@ -43,7 +47,7 @@ class Phage():
     Main timestep function
     """
 
-    def timestep(self, Ns:float, bP:float, absP:float, dP:float):
+    def timestep(self, Ns:float, inf:float):
         """
         Ns (float): number of susceptible hosts
         bP (float): burst size of phage
@@ -51,11 +55,19 @@ class Phage():
         dP (float): decay rate of phage  
         """
 
+        absp = self.absp
+        beta = self.beta
+        d = self.d
+
         Np = self.__pop # phage pop
 
-        self.__pop += absP*(bP-1)*Ns*Np*self.__fitness - dP*Np
+        
+        # self.__pop += absp*(beta-1)*Ns*Np*self.__fitness - d*Np
+        self.__pop += 0.5*beta*inf - absp*Np*Ns - d*Np
+        # something is up with the latent phage mutations: new phages are instantly dying
+        # if beta*inf < 1 and self.__pop < 1: self.__pop = 0
+        # if self.__pop < 1: self.__pop = 0
 
-        if self.__pop < 1: self.__pop = 0
         return None
 
 ##########################################################################################################
@@ -128,5 +140,6 @@ class Phage():
 """
 print testing
 """
-a = "".join(np.random.choice(NUCLEOTIDES, size=20, replace=True))
-# print(len(a))
+# a = {"1":{"a":3,"b":4},"2":{"a":100}}
+
+# print(*a)

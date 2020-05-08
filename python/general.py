@@ -13,12 +13,13 @@ import numpy as np
 #     return type.name
 
 
-def generateName(type:Type, num):
+def generateName(type:Type):
     """Make names for different objects of different classes"""
     # name = type.value + str(num)
     nums = range(0,10)
     idList = np.random.choice(nums, size=10, replace=True)
-    name = type.value + "".join( map(str,idList) )
+    nameEnd = "".join( map(str,idList) )
+    name = "%s%s" % (type.value,nameEnd)
     return name
 
 
@@ -68,15 +69,7 @@ def runProcess(func):
     def wrapper(*args,**kw):
 
         n = 1.0 # default expected number of events
-        try: kw["p"]
-        except KeyError:
-            print("Probability per event p not given. Assigning p=0")
-            p = 0.0
-        else:
-            p = kw["p"]
-        
-        
-        item_list = list()
+        p = kw.get("p",0.0)
 
         for num in args[1:len(args)]:
 
@@ -95,17 +88,13 @@ def runProcess(func):
             # finally: 
             #     print(num)
             n *= num 
+        item_list = []
         if n > 0 and p>0:
             
             numEvents = np.random.binomial(n,p) 
-            # print(str(lam) + " -> " + str(numEvents))
-            # print(numEvents)
-            # i = 0 # for iteration
             
-            for i in range(0,numEvents):
-                
-                item_list.append( func(args[0],**kw, num=i) )
-                # print(value)
+            item_list = [func(args[0],**kw) for i in range(numEvents)]
+            
         return item_list
 
     return wrapper
@@ -154,15 +143,23 @@ def testFunc(*args, b=""):
 
 #         return newGenome
 
-a = range(0,10)
-N=10**6
-P=10**7
-ab=10**-7
-m=10**-5
-lam = N*P*ab*m
-n = N*P*ab
-# def run(**kw):
-#     print(kw["p"])
-# run(p=1)
-# print(np.random.poisson(lam =lam, size = 10))
-# print(np.random.binomial(n=n,p=m,size=10))
+# import timeit
+# a = list(range(1000000))
+# c = list()
+# t0 = timeit.default_timer()
+# for i in a:
+#     x = i *4
+#     c.append(x**2)
+#     # c.append(i*3)
+# t1 = timeit.default_timer()
+# print(t1-t0)
+
+# # a = [0]
+# c = list()
+
+# t0 = timeit.default_timer()
+# # b = [i*2 for i in a]
+# c = [(i*3)**2 for i in a]
+
+# t1 = timeit.default_timer()
+# print(t1-t0)

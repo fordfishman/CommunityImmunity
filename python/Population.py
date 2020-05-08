@@ -26,6 +26,7 @@ class Population():
         self.__phageSet = dict()
         self.__resSize = 0
         self.__vulnSize = 0
+        self.__infected = dict() # current number of infections due to phage x
 
 ##########################################################################################################
      
@@ -44,6 +45,12 @@ class Population():
 
     def popSize(self):
         return self.__popSize
+
+    def ipopSize(self):
+        return self.__ipopSize
+
+    def infected(self):
+        return self.__infected
     
     def resSize(self):
         return self.__resSize
@@ -68,7 +75,7 @@ class Population():
     Main timestep function
     """
 
-    def timestep(self, N:int, a:float, b:float, c:float,  y:float, absP:float, p:dict, pS:float):
+    def timestep(self, N:int, p:dict, pS:float):
         """
         N (int): total community size
         a (float): competition coefficient
@@ -78,35 +85,42 @@ class Population():
         strains = deepcopy(self.__strains)
         newStrains = list()
         extinctStrainNames = set()
+        # allPhages = set() # all phage names that are infecting
+        # infected = dict()
         resSize = 0 
         vulnSize = 0 # number of vulnerable hosts at this timestep
 
-        for strainName,strain in strains.items():
 
-            if strain.pop() == 0:
+        for strainName,strain0 in strains.items():
+
+            strain = deepcopy(strain0)
+
+            if strain.pop() == 0 and strain.ipop() == 0:
                 extinctStrainNames.add(strainName)
-                print("1 host strain dead")
                 continue
-
+            
             phages = p[strainName] # the phages infecting this strain
-            phageTotalList = [phage.pop() for phage in phages.values()]
-            phageTotal = sum(phageTotalList) # the number of infecting phages per strain
-
-            strains[strainName].timestep(N=N,a=a,b=b,c=c,y=y,absP=absP,p=phageTotal)
-
-            if strain.hasCost():
-                resSize += strains[strainName].pop()
-            else:
-                vulnSize += strains[strainName].pop()
+            
+            absorbedPhages = 0
 
             for phage in phages.values():
 
-                n = absP*phage.pop()*strain.pop() # number of infections
+                absorbedPhages += phage.pop()*phage.absp
+
+                n = self.__activeInfections(phage.absp, strain, phage)  # number of infections
+
+                self.__infected[phage.name()] = n
 
                 if n == 0:
                     continue
                 
-                newStrains = [*newStrains, *self.newSpacer(n,p=pS,strain=strain, phage=phage) ]
+                newStrains += self.newSpacer(n,p=pS,strain=strain, phage=phage) 
+
+            strains[strainName].timestep(N=N,absP=absorbedPhages)
+            if strain.hasCost():
+                resSize += strains[strainName].pop()
+            else:
+                vulnSize += strains[strainName].pop()
 
         newStrains_dict = {newStrain.name():newStrain for newStrain in newStrains}
         strains.update(newStrains_dict)
@@ -116,6 +130,7 @@ class Population():
         self.__updatePopSize() # re-calculate population size
         self.__resSize = resSize
         self.__vulnSize = vulnSize
+        # self.__infected = infected
 
         return None
 
@@ -130,103 +145,86 @@ class Population():
         # strains = deepcopy( self.__strains )
         strains = self.__strains 
         # vStrains = dict() # dictionary for storing vulnerable strains
-        vStrains = set()
+        vStrains = {strain for strain in strains.values() if strain.isVulnerable(receptor) and not strain.isImmune(phageGenome)} 
 
         """optimize when I add in event types"""
 
-        for strain in strains.values():
+        # for strain in strains.values():
 
-            if strain.isVulnerable(receptor) and not strain.isImmune(phageGenome):
+        #     if strain.isVulnerable(receptor) and not strain.isImmune(phageGenome):
 
-                vStrains.add(strain)
+        #         vStrains.add(strain)
 
         return vStrains
 
-    def subTotal(self, phageGenome:str, receptor:str):
-        """Returns the total number of hosts susceptible to a phage"""
-        total = 0
 
-        for strain in self.vulnerableStrains(phageGenome, receptor):
-
-            total += strain.pop()
-
-        return total
-
-    def updatePhageSet(self, receptor:str, phageGenome:str, phageName:str):
-        """
-        
-        """
-        # vStrains = deepcopy(self.vulnerableStrains(phageGenome, receptor))
-        vStrains = self.vulnerableStrains(phageGenome, receptor)
-
-        for strain in vStrains:
-
-            self.__phageSet[strain.name()] = strain.phages()
-
-        return None
 
     @gen.runProcess
-    def newSpacer(self, *args, p:float=0, strain:Strain=None, phage:Phage=None, num:int=0):
+    def newSpacer(self, *args, p:float=0, strain:Strain=None, phage:Phage=None):
 
         """Adds a new strain based on another but with a new spacer"""
 
         if strain is None or phage is None:
             raise KeyError("Need to specify strain name and phage")
+        oldSpacers = strain.crispr().spacers()
+        
+        a = strain.a
+        b = strain.b 
+        c = strain.c 
+        y = strain.y
 
-        oldSpacers = deepcopy(strain.crispr().spacers())
-        # oldSpacers = strain.crispr().spacers()
-
-
-        crispr = Crispr.Crispr( oldSpacers
-        ) 
+        crispr = Crispr.Crispr( oldSpacers) 
 
         spacer = crispr.makeSpacer( genome = phage.genome() ) # generate a new spacer based on phage genome
         crispr.addSpacer(spacer)
             
-        newName = gen.generateName(Type.STRAIN, len(self.__strains)+1)
+        newName = gen.generateName(Type.STRAIN)
 
         newStrain = Strain.Strain( # organism with new spacer is a new strain, one starting cell
             name=newName,
+            a=a,
+            b=b,
+            c=c,
+            y=y,
             crispr=crispr,
             phReceptors=strain.phReceptors(),
             pop = 1.0
         )
-        # newStrain.addSpacer(spacer)
-
+        
         return newStrain
     # mutations of receptors, new spacers?
 
     def receptorMod(self, strainName:str, newStrainName:str, newReceptorName:str):
         """At random, a strain in population will have a random receptor modified"""
-        strain = np.random.choice( # random strain chosen
-            a = self.__strains,
-            replace = True
-        )
+        # strain = np.random.choice( # random strain chosen
+        #     a = self.__strains,
+        #     replace = True
+        # )
 
-        receptor = np.random.choice( # random receptor chosen
-            a = strain.phReceptors(),
-            replace = True
-        )
+        # receptor = np.random.choice( # random receptor chosen
+        #     a = strain.phReceptors(),
+        #     replace = True
+        # )
 
-        newStrain = Strain.Strain( # organism with new spacer is a new strain, one starting cell
-            name=newStrainName,
-            crispr=strain.crispr(),
-            phReceptors=strain.phReceptors()
-        )
+        # newStrain = Strain.Strain( # organism with new spacer is a new strain, one starting cell
+        #     name=newStrainName,
+        #     crispr=strain.crispr(),
+        #     phReceptors=strain.phReceptors()
+        # )
         
-        fitness = np.random.random()
+        # fitness = np.random.random()
 
-        newReceptor = PhageReceptor.PhageReceptor(
-            name = newReceptorName,
-            fitness = fitness
-        )
+        # newReceptor = PhageReceptor.PhageReceptor(
+        #     name = newReceptorName,
+        #     fitness = fitness
+        # )
 
-        newStrain.addReceptor(newReceptor)
-        newStrain.removeReceptor(receptor.name())
+        # newStrain.addReceptor(newReceptor)
+        # newStrain.removeReceptor(receptor.name())
 
-        self.__strains[newReceptorName] = newReceptor
+        # self.__strains[newReceptorName] = newReceptor
 
-        self.__updatePopSize() # re-calculate pop size
+        # self.__updatePopSize() # re-calculate pop size
 
         return None
         
@@ -239,11 +237,14 @@ class Population():
         """Re-total population size across all strains"""
         strains = self.__strains
         popSize = 0
+        ipopSize = 0
 
-        for i in strains:
-            popSize += strains[i].pop()
+        for strain in strains.values():
+            popSize += strain.pop()
+            ipopSize += strain.ipop()
         
         self.__popSize = popSize
+        self.__ipopSize = ipopSize
 
         return None
 
@@ -258,3 +259,23 @@ class Population():
             total += phageDict[phage]
 
         return total
+
+    def __activeInfections(self, absP:float, strain:Strain, phage:Phage):
+        """
+        Returns current number of infections due to this phage
+        """
+        newInfections = strain.pop()*absP*phage.pop()
+        phageName = phage.name()
+        totalInfections = 0
+        oldInfections = self.__infected.get(phageName, 0)
+        # try:
+        #     self.__infected[phageName]
+        # except KeyError:
+        #     totalInfections = newInfections
+        # else:
+        # oldInfections = self.__infected[phageName]
+        lysisEvents = 0.5*oldInfections
+        totalInfections = newInfections + oldInfections - lysisEvents
+
+        return totalInfections
+

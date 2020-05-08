@@ -5,7 +5,8 @@
 sourcepath=/Users/fordfishman/GitHub/CommunityImmunity
 python=$sourcepath/python
 r=$sourcepath/r
-output=$sourcepath/output/labmeeting20200428/m105_pS106_aH_107_fP
+# output=$sourcepath/output/latency_test/m105_pS106_aH_107_f1
+output=$sourcepath/output/efficiency_test
 
 # Run main python script
 
