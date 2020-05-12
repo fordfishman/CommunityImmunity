@@ -23,10 +23,10 @@ class Phage():
 
     def __init__(self, name:str, absp:float, beta:float, d:float, receptor:PhageReceptor, genome:str = None, genomeLength:int = 100, pop:float = 1, fitness:float = 1):
 
-        self.__name = name
-        self.__pop = pop
-        self.__receptor = receptor
-        self.__fitness = fitness
+        self.name = name
+        self.pop = pop
+        self.receptor = receptor
+        self.fitness = fitness
         # self.__strains = set()
         # self.__targetPop = targetPop
 
@@ -35,11 +35,11 @@ class Phage():
         self.d = d
 
         if not genome is None: 
-            self.__genome = genome
+            self.genome = genome
 
         else: # Generates a pseudo-genome for the phage
             # Essentially provides it with pseudo-spacers
-            self.__genome = "".join(np.random.choice(NUCLEOTIDES, size=genomeLength, replace=True))
+            self.genome = "".join(np.random.choice(NUCLEOTIDES, size=genomeLength, replace=True))
 
 ##########################################################################################################
 
@@ -59,14 +59,14 @@ class Phage():
         beta = self.beta
         d = self.d
 
-        Np = self.__pop # phage pop
+        Np = self.pop # phage pop
 
         
         # self.__pop += absp*(beta-1)*Ns*Np*self.__fitness - d*Np
-        self.__pop += 0.5*beta*inf - absp*Np*Ns - d*Np
+        self.pop += 0.5*beta*inf - absp*Np*Ns - d*Np
         # something is up with the latent phage mutations: new phages are instantly dying
-        # if beta*inf < 1 and self.__pop < 1: self.__pop = 0
-        # if self.__pop < 1: self.__pop = 0
+        # if beta*inf < 1 and self.pop < 1: self.pop = 0
+        if self.pop < 1: self.pop = 0
 
         return None
 
@@ -75,20 +75,20 @@ class Phage():
     """
     Attribute functions
     """
-    def genome(self):
-        return self.__genome
+    # def genome(self):
+    #     return self.__genome
 
-    def receptor(self):
-        return self.__receptor
+    # def receptor(self):
+    #     return self.__receptor
     
-    def name(self):
-        return self.__name
+    # def name(self):
+    #     return self.__name
     
-    def pop(self):
-        return(self.__pop)
+    # def pop(self):
+    #     return(self.__pop)
 
-    def fitness(self):
-        return(self.__fitness)
+    # def fitness(self):
+    #     return(self.__fitness)
 
     # def targetPop(self):
     #     return(self.__targetPop)
@@ -109,10 +109,10 @@ class Phage():
         # print(self.__genome)
         nt = np.random.choice(NUCLEOTIDES) # the new nucleotide
 
-        gLength = len(self.__genome) # genome length
+        gLength = len(self.genome) # genome length
         i = np.random.choice( range(0, gLength) )
         # make genome into a list to change position
-        genomeList = list(self.__genome) 
+        genomeList = list(self.genome) 
         genomeList[i] = nt
         newGenome = "".join(genomeList)
         # print(newGenome)
@@ -121,10 +121,10 @@ class Phage():
     @mutate.register(Mutation.DELETION)
     def _(self, mutation) -> str:
         
-        gLength = len(self.__genome) # genome length
+        gLength = len(self.genome) # genome length
         i = np.random.choice( range(0, gLength) )
         # make genome into a list to delete position
-        genomeList = list(self.__genome)
+        genomeList = list(self.genome)
         genomeList.pop(i)
         newGenome = "".join(genomeList)
 

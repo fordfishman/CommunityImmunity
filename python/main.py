@@ -29,10 +29,10 @@ pS = 10**-6 # prob of spacer forming if infection occurs per host
 b = 1.2 # initial max intrinsic growth of hosts
 a = 10**6 # region where density dependence sets in for hosts
 y = 1 # rate of density dependence setting in around a, y = 1 makes classic beverton holt 
-crisprCost = 0.1 # fitness cost of having active CRISPR system
+crisprCost = 0 # fitness cost of having active CRISPR system
 
 # phage parameters
-beta = 30 # burst size of phage
+beta = 10 # burst size of phage
 absp = 10**-7 # absorbtion rate of phage
 d = 0.1 # natural decay rate of phage
 m = 10**-7 # phage mutation rate per nt
@@ -58,7 +58,7 @@ def initialize():
         y = y,
         crispr = crispr0,
         phReceptors = {
-            receptor1.name():receptor1
+            receptor1.name:receptor1
             },
         pop = 100000
     )
@@ -77,7 +77,7 @@ def initialize():
     pop1 = Population.Population(
         name = "pop" + "1",
         strains = {
-            strain1.name(): strain1
+            strain1.name: strain1
         } 
     )
 
@@ -85,10 +85,10 @@ def initialize():
 
     com = Community.Community(
         populations = {
-            pop1.name(): pop1
+            pop1.name: pop1
         },
         phages = {
-            phage1.name(): phage1
+            phage1.name: phage1
         }
     )
     return com 
@@ -109,7 +109,7 @@ def main():
     """
 
     community = initialize()
-    N = community.totalComSize() # community size
+    N = community.totalComSize # community size
     pRichness = [len( community.phagesPopDict() )] # phage richness over time
     sRichness = [1] # strain richness over time
     cRichness = list() # spacer richness over time (list of lists)
@@ -124,8 +124,8 @@ def main():
         cRichness.append( community.spacerRichness() )
 
 
-    N = str(community.comSizeOverTime()[-1]) # community size
-    P = str(community.phagePopOverTime()[-1])
+    N = str(community.comSizeOverTime[-1]) # community size
+    P = str(community.phagePopOverTime[-1])
     print("hosts:\t%s"%(N))
     print("phages:\t%s"%(P))
     print("Strains:")
@@ -139,14 +139,17 @@ def main():
     print("max: %s\tmean: %s" % (max(community.strainTimes), stat.mean(community.strainTimes)))
     print("Phage times:")
     print("max: %s\tmean: %s" % (max(community.phageTimes), stat.mean(community.phageTimes)))
-    
+    print("Other times:")
+    print("max: %s\tmean: %s" % (max(community.otherTimes), stat.mean(community.otherTimes)))
+    print()
+    print("max resistant: %s"%(max(community.resOverTime)))
     df1 = pd.DataFrame( 
         list( 
             zip(
-                community.comSizeOverTime(), 
-                community.phagePopOverTime(),
-                community.resOverTime(),
-                community.vulnOverTime(), 
+                community.comSizeOverTime, 
+                community.phagePopOverTime,
+                community.resOverTime,
+                community.vulnOverTime, 
                 range(1,timesteps+1), 
                 ) 
             ),
@@ -166,8 +169,8 @@ def main():
 
     df1.to_csv(outputMain)
     df2.to_csv(outputRichness)
-    # for phage in community.phages().values():
-    #     print(phage.genome())
+    # for phage in community.phages.values:
+    #     print(phage.genome)
     return None
 
 """
@@ -223,7 +226,7 @@ Print tests
 #     pop1 = Population.Population(
 #         name = "pop" + "1",
 #         strains = {
-#             strain1.name(): strain1
+#             strain1.name: strain1
 #         } 
 #     )
 
@@ -235,10 +238,10 @@ Print tests
 #     com = Community.Community(
 #         k=1000,
 #         populations = {
-#             pop1.name(): pop1
+#             pop1.name: pop1
 #         },
 #         phages = {
-#             phage1.name(): phage1
+#             phage1.name: phage1
 #         }
 #     )
 #     return com 
@@ -246,11 +249,11 @@ Print tests
 
 
 # community = initialize()
-# N = community.totalComSize() # community size
+# N = community.totalComSize # community size
 # print(community.)
 # for i in range(timesteps): # run for # of timesteps
 
-#     N = community.totalComSize() # community size
+#     N = community.totalComSize # community size
 
 #     community.getPopulation("pop1").getStrain("s1").timestep(N,a,b,crisprCost)
 #     # community.timestep(N, a, b, crisprCost)

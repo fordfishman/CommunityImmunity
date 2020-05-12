@@ -20,13 +20,13 @@ class Population():
 
     def __init__(self, name:str, strains:dict):
 
-        self.__name = name
-        self.__strains = strains
+        self.name = name
+        self.strains = strains
         self.__updatePopSize()
-        self.__phageSet = dict()
-        self.__resSize = 0
-        self.__vulnSize = 0
-        self.__infected = dict() # current number of infections due to phage x
+        self.phageSet = dict()
+        self.resSize = 0
+        self.vulnSize = 0
+        self.infected = dict() # current number of infections due to phage x
 
 ##########################################################################################################
      
@@ -34,40 +34,37 @@ class Population():
     Attribute functions
     """
 
-    def name(self):
-        return self.__name
+    # def name(self):
+    #     return self.__name
 
-    def getStrain(self, strainName:str):
-        return self.__strains[strainName]
+    # def getStrain(self, strainName:str):
+    #     return self.strains[strainName]
+
+    # def popSize(self):
+    #     return self.__popSize
+
+    # def ipopSize(self):
+    #     return self.__ipopSize
+
+    # def infected(self):
+    #     return self.__infected
     
-    def strains(self):
-        return self.__strains
-
-    def popSize(self):
-        return self.__popSize
-
-    def ipopSize(self):
-        return self.__ipopSize
-
-    def infected(self):
-        return self.__infected
+    # def resSize(self):
+    #     return self.__resSize
     
-    def resSize(self):
-        return self.__resSize
-    
-    def vulnSize(self):
-        return self.__vulnSize
+    # def vulnSize(self):
+    #     return self.__vulnSize
 
-    def phageSet(self):
-        return self.__phageSet
+    # def phageSet(self):
+    #     return self.__phageSet
 
     def richness(self):
-        return len(self.__strains)
+        return len(self.strains)
     
     def spacerRichness(self)->list:
         """each strain has a value"""
-        strains = self.__strains.values()
-        return [ strain.crisprLength() for strain in strains ]
+        strains = self.strains.values()
+        return [ len(strain.crispr) for strain in strains ]
 
 ##########################################################################################################
 
@@ -82,7 +79,7 @@ class Population():
         b (float): intrinsic growth rate
         c (float): cost of crispr
         """
-        strains = deepcopy(self.__strains)
+        strains = deepcopy(self.strains)
         newStrains = list()
         extinctStrainNames = set()
         # allPhages = set() # all phage names that are infecting
@@ -95,7 +92,7 @@ class Population():
 
             strain = deepcopy(strain0)
 
-            if strain.pop() == 0 and strain.ipop() == 0:
+            if strain.pop == 0 and strain.ipop == 0:
                 extinctStrainNames.add(strainName)
                 continue
             
@@ -105,11 +102,11 @@ class Population():
 
             for phage in phages.values():
 
-                absorbedPhages += phage.pop()*phage.absp
+                absorbedPhages += phage.pop*phage.absp
 
                 n = self.__activeInfections(phage.absp, strain, phage)  # number of infections
 
-                self.__infected[phage.name()] = n
+                self.infected[phage.name] = n
 
                 if n == 0:
                     continue
@@ -118,18 +115,18 @@ class Population():
 
             strains[strainName].timestep(N=N,absP=absorbedPhages)
             if strain.hasCost():
-                resSize += strains[strainName].pop()
+                resSize += strains[strainName].pop
             else:
-                vulnSize += strains[strainName].pop()
+                vulnSize += strains[strainName].pop
 
-        newStrains_dict = {newStrain.name():newStrain for newStrain in newStrains}
+        newStrains_dict = {newStrain.name:newStrain for newStrain in newStrains}
         strains.update(newStrains_dict)
         finalStrains = {strainName:strain for strainName,strain in strains.items() if not strainName in extinctStrainNames}
-        self.__strains = finalStrains
+        self.strains = finalStrains
         
         self.__updatePopSize() # re-calculate population size
-        self.__resSize = resSize
-        self.__vulnSize = vulnSize
+        self.resSize = resSize
+        self.vulnSize = vulnSize
         # self.__infected = infected
 
         return None
@@ -142,8 +139,8 @@ class Population():
 
     def vulnerableStrains(self, phageGenome:str, receptor:str):
 
-        # strains = deepcopy( self.__strains )
-        strains = self.__strains 
+        # strains = deepcopy( self.strains )
+        strains = self.strains 
         # vStrains = dict() # dictionary for storing vulnerable strains
         vStrains = {strain for strain in strains.values() if strain.isVulnerable(receptor) and not strain.isImmune(phageGenome)} 
 
@@ -166,7 +163,7 @@ class Population():
 
         if strain is None or phage is None:
             raise KeyError("Need to specify strain name and phage")
-        oldSpacers = strain.crispr().spacers()
+        oldSpacers = strain.crispr.spacers
         
         a = strain.a
         b = strain.b 
@@ -175,7 +172,7 @@ class Population():
 
         crispr = Crispr.Crispr( oldSpacers) 
 
-        spacer = crispr.makeSpacer( genome = phage.genome() ) # generate a new spacer based on phage genome
+        spacer = crispr.makeSpacer( genome = phage.genome ) # generate a new spacer based on phage genome
         crispr.addSpacer(spacer)
             
         newName = gen.generateName(Type.STRAIN)
@@ -187,7 +184,7 @@ class Population():
             c=c,
             y=y,
             crispr=crispr,
-            phReceptors=strain.phReceptors(),
+            phReceptors=strain.phReceptors,
             pop = 1.0
         )
         
@@ -197,7 +194,7 @@ class Population():
     def receptorMod(self, strainName:str, newStrainName:str, newReceptorName:str):
         """At random, a strain in population will have a random receptor modified"""
         # strain = np.random.choice( # random strain chosen
-        #     a = self.__strains,
+        #     a = self.strains,
         #     replace = True
         # )
 
@@ -222,7 +219,7 @@ class Population():
         # newStrain.addReceptor(newReceptor)
         # newStrain.removeReceptor(receptor.name())
 
-        # self.__strains[newReceptorName] = newReceptor
+        # self.strains[newReceptorName] = newReceptor
 
         # self.__updatePopSize() # re-calculate pop size
 
@@ -235,16 +232,16 @@ class Population():
     """
     def __updatePopSize(self):
         """Re-total population size across all strains"""
-        strains = self.__strains
+        strains = self.strains
         popSize = 0
         ipopSize = 0
 
         for strain in strains.values():
-            popSize += strain.pop()
-            ipopSize += strain.ipop()
+            popSize += strain.pop
+            ipopSize += strain.ipop
         
-        self.__popSize = popSize
-        self.__ipopSize = ipopSize
+        self.popSize = popSize
+        self.ipopSize = ipopSize
 
         return None
 
@@ -264,10 +261,10 @@ class Population():
         """
         Returns current number of infections due to this phage
         """
-        newInfections = strain.pop()*absP*phage.pop()
-        phageName = phage.name()
+        newInfections = strain.pop*absP*phage.pop
+        phageName = phage.name
         totalInfections = 0
-        oldInfections = self.__infected.get(phageName, 0)
+        oldInfections = self.infected.get(phageName, 0)
         # try:
         #     self.__infected[phageName]
         # except KeyError:

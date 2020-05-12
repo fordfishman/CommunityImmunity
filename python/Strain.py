@@ -17,14 +17,14 @@ class Strain():
     phages (set(str)): names of phages this strain can be infected by
     """
     def __init__(self, name:str, a:float, b:float, c:float, y:float, crispr:Crispr= None, phReceptors:dict = None, pop:float = 1):
-        self.__name = name
-        self.__crispr = crispr
-        self.__phReceptors = phReceptors
-        self.__activeReceptors = dict()
-        self.__pop = pop
-        self.__ipop = 0 # infected pop
-        self.__intrinsicFitness = 1 # CHANGE THIS AT SOME POINT WHEN I ADD IN RESOURCES
-        self.__phages = set()
+        self.name = name
+        self.crispr = crispr
+        self.phReceptors = phReceptors
+        self.activeReceptors = dict()
+        self.pop = pop
+        self.ipop = 0 # infected pop
+        self.intrinsicFitness = 1 # CHANGE THIS AT SOME POINT WHEN I ADD IN RESOURCES
+        self.phages = set()
 
         self.a = a
         self.b = b
@@ -34,8 +34,8 @@ class Strain():
         if not phReceptors is None:
             for receptorName in phReceptors: # for all receptors in a strain
                 # if the receptor just became active, add to active dict
-                if phReceptors[receptorName].isExpressed():
-                    self.__activeReceptors[receptorName] = phReceptors[receptorName]
+                if phReceptors[receptorName].isExpressed:
+                    self.activeReceptors[receptorName] = phReceptors[receptorName]
 
 ##########################################################################################################
 
@@ -43,32 +43,32 @@ class Strain():
     Attribute functions
     """
 
-    def name(self):
-        return self.__name
+    # def name(self):
+    #     return self.__name
 
-    def phReceptors(self):
-        return self.__phReceptors
+    # def phReceptors(self):
+    #     return self.__phReceptors
 
-    def getReceptor(self, receptorName:str):
-        return self.__phReceptors[receptorName]
+    # def getReceptor(self, receptorName:str):
+    #     return self.__phReceptors[receptorName]
 
-    def crispr(self):
-        return self.__crispr
+    # def crispr(self):
+    #     return self.__crispr
     
-    def crisprLength(self):
-        return len(self.__crispr)
+    # def crisprLength(self):
+    #     return len(self.__crispr)
 
-    def pop(self):
-        return self.__pop
+    # def pop(self):
+    #     return self.__pop
 
-    def ipop(self):
-        return self.__ipop
+    # def ipop(self):
+    #     return self.__ipop
 
-    def intrinsicFitness(self):
-        return self.__intrinsicFitness
+    # def intrinsicFitness(self):
+    #     return self.__intrinsicFitness
 
-    def phages(self):
-        return (self.__phages)
+    # def phages(self):
+    #     return (self.__phages)
 
 ##########################################################################################################
     """
@@ -94,15 +94,15 @@ class Strain():
             c = 0
         
         # fitness 
-        r = b * ( self.__intrinsicFitness - c ) - absP # Beverton-Holt Model
+        r = b * ( self.intrinsicFitness - c ) - absP # Beverton-Holt Model
         
-        self.__ipop += self.__pop*absP - 0.5 * self.__ipop # infected pop 
+        self.ipop += self.pop*absP - 0.5 * self.ipop # infected pop 
             
         # reproduce
-        self.__pop = ( r*self.__pop )/( 1 + ( N/a )**y ) 
+        self.pop = ( r*self.pop )/( 1 + ( N/a )**y ) 
 
-        if self.__pop < 1: self.__pop = 0
-        if self.__ipop < 1: self.__ipop = 0
+        if self.pop < 1: self.pop = 0
+        if self.ipop < 1: self.ipop = 0
 
         return None
 
@@ -112,21 +112,21 @@ class Strain():
     Other functions
     """
     def addSpacer(self,spacer:str):
-        if not self.__crispr is None:
+        if not self.crispr is None:
 
-            self.__crispr.addSpacer(spacer)
+            self.crispr.addSpacer(spacer)
         return None
         
 
     def isVulnerable(self, receptor:str): 
         """Does this strain have the phage receptor to be vulnerable to this phage"""
         # if the receptor is in strain and is expressed
-        return receptor in self.__phReceptors and self.__phReceptors[receptor].isExpressed()  
+        return receptor in self.phReceptors and self.phReceptors[receptor].isExpressed  
 
 
     def isImmune(self, phageGenome:str):
         """Does the strain have CRISPR resistance"""
-        crispr = self.__crispr
+        crispr = self.crispr
         
         return crispr.hasSpacer( genome = phageGenome )
 
@@ -135,24 +135,24 @@ class Strain():
 
         if self.isVulnerable(receptor) and not self.isImmune(phageGenome):
 
-            self.__phages.add(phageName)
+            self.phages.add(phageName)
         
         else: 
 
-            self.__phages.remove(phageName)
+            self.phages.remove(phageName)
 
         return None
 
     def addReceptor(self, receptor:PhageReceptor.PhageReceptor):
         """Add a receptor to strain"""
-        self.__phReceptors[receptor.name()] = receptor
+        self.phReceptors[receptor.name] = receptor
 
         return None
 
     def removeReceptor(self, receptorName:str):
         """Removes receptor from strain. Use when a receptor is modified (old one is lost, new one is gained)"""
         
-        self.__phReceptors.pop(receptorName)
+        self.phReceptors.pop(receptorName)
         
         return None
 
@@ -160,9 +160,9 @@ class Strain():
         """Is there a CRISPR-associated cost to this strain?"""
         cost = False # initialize cost to be 0
 
-        if not self.__crispr is None: # if strain has a crispr 
+        if not self.crispr is None: # if strain has a crispr 
 
-            cost = self.__crispr.hasCost()
+            cost = self.crispr.hasCost
 
         return cost
     # def changeReceptorActivity(self, receptorName:str, active:bool):

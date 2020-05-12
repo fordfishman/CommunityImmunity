@@ -19,11 +19,11 @@ class Crispr():
     """
     def __init__(self, spacers:set=None, spacerLength:int = 20, isActive:bool=True):
         if not spacers is None:
-            self.__spacers = spacers
+            self.spacers = spacers
         else:
-            self.__spacers = set()
-        self.__spacerLength = spacerLength
-        self.__isActive = isActive
+            self.spacers = set()
+        self.spacerLength = spacerLength
+        self.isActive = isActive
         self.__updateCost()
         
 ##########################################################################################################
@@ -32,31 +32,31 @@ class Crispr():
     Attribute Functions
     """
     def __len__(self):
-        return len(self.__spacers)
+        return len(self.spacers)
 
     def hasSpacer(self, genome:str):
         """Only checks for single match"""
         match = False
         seq = ''
 
-        if len(self.__spacers) != 0: # if system has spacers
-            for i in range(0, len(genome) - self.__spacerLength): # check entire genome for spacers
-                seq = genome[i:i + self.__spacerLength] 
+        if len(self.spacers) != 0: # if system has spacers
+            for i in range(0, len(genome) - self.spacerLength): # check entire genome for spacers
+                seq = genome[i:i + self.spacerLength] 
 
-                if seq in self.__spacers:
+                if seq in self.spacers:
                     match = True
                     break
 
         return match
     
-    def hasCost(self):
-        return self.__hasCost
+    # def hasCost(self):
+    #     return self.__hasCost
 
-    def isActive(self):
-        return (self.__isActive)
+    # def isActive(self):
+    #     return (self.__isActive)
 
-    def spacers(self):
-        return self.__spacers
+    # def spacers(self):
+    #     return self.__spacers
 
 ##########################################################################################################
 
@@ -66,13 +66,13 @@ class Crispr():
 
     def makeSpacer(self, genome:str)->str:
         """Make a new spacer based on the incoming DNA"""
-        inds = [ i for i in range( 0, len(genome) - self.__spacerLength ) ] # all possible starting spots for a new spacer
+        inds = [ i for i in range( 0, len(genome) - self.spacerLength ) ] # all possible starting spots for a new spacer
         i = int(np.random.choice(inds))
-        return genome[i : (i + self.__spacerLength)]
+        return genome[i : (i + self.spacerLength)]
 
     def addSpacer(self, spacer:str):
         
-        self.__spacers.add(spacer)
+        self.spacers.add(spacer)
 
         self.__updateCost() # check to see if there is a cost to the CRISPR now
 
@@ -80,7 +80,7 @@ class Crispr():
 
     def removeSpacer(self):
         """Remove a spacer randomly"""
-        self.__spacers.pop()
+        self.spacers.pop()
 
         self.__updateCost() # check to see if there is a cost to the CRISPR now
 
@@ -88,7 +88,7 @@ class Crispr():
     
     def activate(self):
         """Turn system on"""
-        self.__isActive = True
+        self.isActive = True
 
         self.__updateCost() # check to see if there is a cost to the CRISPR now
 
@@ -96,7 +96,7 @@ class Crispr():
 
     def deactivate(self):
         """Turn system off"""
-        self.__isActive = False
+        self.isActive = False
 
         self.__updateCost() # check to see if there is a cost to the CRISPR now
 
@@ -111,5 +111,5 @@ class Crispr():
 
     def __updateCost(self):
         """Has cost if has spacer and is active"""
-        self.__hasCost = self.__isActive and len(self.__spacers)>0  
+        self.hasCost = self.isActive and len(self.spacers)>0  
         return None

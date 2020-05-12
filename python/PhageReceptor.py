@@ -10,19 +10,19 @@ class PhageReceptor():
     function (float): relative fitness of this specific receptor
     """
     def __init__(self, name:str, fitness:float=1.0, expressed:bool=True):
-        self.__expressed = expressed
-        self.__name = name
-        self.__fitness = fitness
+        self.isExpressed = expressed
+        self.name = name
+        self.fitness = fitness
 
     """
     Attribute functions
     """
 
-    def isExpressed(self):
-        return self.__expressed
+    # def isExpressed(self):
+    #     return self.expressed
     
-    def name(self):
-        return self.__name
+    # def name(self):
+    #     return self.name
 
-    def fitness(self):
-        return self.__fitness
+    # def fitness(self):
+    #     return self.__fitness
