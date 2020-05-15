@@ -29,13 +29,14 @@ pS = 10**-6 # prob of spacer forming if infection occurs per host
 b = 1.2 # initial max intrinsic growth of hosts
 a = 10**6 # region where density dependence sets in for hosts
 y = 1 # rate of density dependence setting in around a, y = 1 makes classic beverton holt 
-crisprCost = 0 # fitness cost of having active CRISPR system
+crisprCost = 0.1 # fitness cost of having active CRISPR system
 
 # phage parameters
 beta = 10 # burst size of phage
 absp = 10**-7 # absorbtion rate of phage
 d = 0.1 # natural decay rate of phage
-m = 10**-7 # phage mutation rate per nt
+m = 10**-6 # phage mutation rate per nt
+l = 0.5 # proportion of infections that lead to bursting each timestep
 
 """
 Functions called by main
@@ -46,6 +47,10 @@ def initialize():
     Set up initial strains and phages
     Return: com (Community)
     """
+    # beta = np.random.uniform(1,200)
+    # b = np.random.uniform(0.9,2)
+    # a = np.random.uniform(1, 9.9) ** np.random.uniform(4, 9)
+
     receptor1 = PhageReceptor.PhageReceptor( name = "r" + "1" ) # change numbering system
 
     crispr0 = Crispr.Crispr()
@@ -118,7 +123,7 @@ def main():
 
     for i in range(timesteps): # run for # of timesteps
         
-        timestep(pS=pS, m=m)
+        timestep(step = i, pS=pS, m=m, l=l)
         pRichness.append( len( community.phagesPopDict() ) )
         sRichness.append( community.richness() )
         cRichness.append( community.spacerRichness() )
@@ -134,15 +139,18 @@ def main():
     print(pRichness[-1])
     # print("Spacers:")
     # print(cRichness)
-    import statistics as stat
-    print("Strain times:")
-    print("max: %s\tmean: %s" % (max(community.strainTimes), stat.mean(community.strainTimes)))
-    print("Phage times:")
-    print("max: %s\tmean: %s" % (max(community.phageTimes), stat.mean(community.phageTimes)))
-    print("Other times:")
-    print("max: %s\tmean: %s" % (max(community.otherTimes), stat.mean(community.otherTimes)))
-    print()
-    print("max resistant: %s"%(max(community.resOverTime)))
+    ## times
+    # import statistics as stat
+    # print("Strain times:")
+    # print("max: %s\tmean: %s" % (max(community.strainTimes), stat.mean(community.strainTimes)))
+    # print("Phage times:")
+    # print("max: %s\tmean: %s" % (max(community.phageTimes), stat.mean(community.phageTimes)))
+    # print("df times:")
+    # print("max: %s\tmean: %s" % (max(community.dfTimes), stat.mean(community.dfTimes)))
+    # print("Other times:")
+    # print("max: %s\tmean: %s" % (max(community.otherTimes), stat.mean(community.otherTimes)))
+    # print()
+    # print("max resistant: %s"%(max(community.resOverTime)))
     df1 = pd.DataFrame( 
         list( 
             zip(
@@ -164,7 +172,7 @@ def main():
                 range(1,timesteps+1)
              ) 
             ),
-        columns= ['HostRichness','PhageRichness','time'],
+        columns = ['HostRichness','PhageRichness','time'],
         )
 
     df1.to_csv(outputMain)

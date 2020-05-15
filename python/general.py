@@ -106,60 +106,23 @@ def testFunc(*args, b=""):
     
 
         
-# print(testFunc(2,3, b = "Asd"))
+import pandas as pd
+import numpy as np
 
-# NUCLEOTIDES = ("A","C","G","T")
+d = {
+    "a":{"1":True,"2":True,"3":False},
+    "b":{"1":True,"2":True,"3":False},
+    "c":{"1":True,"2":True,"3":False}
+}
 
-# class Test():
+def func(val):
+    b = {"5":"five","6":"six","4":"four"}
+    n = val.index
+    # print(val.where(val is dict,"not dict"))
 
-#     @dispatch_on_value
-#     def mutate(self, mutation, genome:str):
-#         pass # only runs if a mutation occurs that's not in thhe class
-        
 
-#     @mutate.register(Mutation.SNP)
-#     def _(self, mutation, genome:str):
 
-#         nt = np.random.choice(NUCLEOTIDES) # the new nucleotide
 
-#         gLength = len(genome) # genome length
-#         i = np.random.choice( range(0, gLength) )
-#         # make genome into a list to change position
-#         genomeList = list(genome) 
-#         genomeList[i] = nt
-#         newGenome = "".join(genomeList)
-
-#         return newGenome
-
-#     @mutate.register(Mutation.DELETION)
-#     def _(self, mutation, genome:str):
-        
-#         gLength = len(genome) # genome length
-#         i = np.random.choice( range(0, gLength) )
-#         # make genome into a list to delete position
-#         genomeList = list(genome)
-#         genomeList.pop(i)
-#         newGenome = "".join(genomeList)
-
-#         return newGenome
-
-# import timeit
-# a = list(range(1000000))
-# c = list()
-# t0 = timeit.default_timer()
-# for i in a:
-#     x = i *4
-#     c.append(x**2)
-#     # c.append(i*3)
-# t1 = timeit.default_timer()
-# print(t1-t0)
-
-# # a = [0]
-# c = list()
-
-# t0 = timeit.default_timer()
-# # b = [i*2 for i in a]
-# c = [(i*3)**2 for i in a]
-
-# t1 = timeit.default_timer()
-# print(t1-t0)
+df = pd.DataFrame({1:1}, index=([1,2],[3,4],[5,6]), columns=(1,2,3))
+df1 = df.apply(lambda col:func(col),axis=0)
+print(df)

@@ -24,9 +24,10 @@ class Community():
         self.resOverTime = list()
         self.vulnOverTime = list()
         self.__updateComSize()
-        self.__initStrainPhageDF()
+        self.__updateStrainPhageDF()
         self.strainTimes = list()
         self.phageTimes = list()
+        self.dfTimes = list()
         self.otherTimes = list()
 
 ##########################################################################################################
@@ -102,7 +103,7 @@ class Community():
     """
     Main timestep function
     """
-    def timestep(self, pS:float, m:float):
+    def timestep(self, step:int, pS:float, m:float, l:float):
         """
         N (int): total community size
         a (float): competition coefficient
@@ -121,8 +122,12 @@ class Community():
         totalResistant = 0
         totalVulnerable = 0
         infected = dict()
+        # structuralChange = False # d
+        # df = pd.DataFrame(None, index = self.strains.keys(), columns=self.phages.keys())
+
         time2 = timeit.default_timer()
         
+
 
         t0 = timeit.default_timer()
 
@@ -135,7 +140,7 @@ class Community():
 
             p = self.infectingPhages(pop)
 
-            pops[popName].timestep(N=self.totalComSize,p=p,pS=pS)
+            pops[popName].timestep(N=self.totalComSize,p=p,pS=pS, l=l)
 
             totalResistant += pop.resSize
             totalVulnerable += pop.vulnSize
@@ -151,22 +156,22 @@ class Community():
         for phageName, phage in phages.items(): 
 
             inf = infected.get(phageName, 0.0)
-            n = 0.5 * phage.beta * inf  # number of new phages
+            n = l * phage.beta * inf  # number of new phages
 
             if n < 0.0001 and phage.pop < 1: # remove extinct phages from community
                 extinctPhageNames.add(phageName)
                 continue
 
-            Ns = self.totalVulnerable(phageName) # hosts vulnerable and infected to this phage
+            Ns = self.totalVulnerable(self.phages[phageName]) # hosts vulnerable and infected to this phage
 
-            phages[phageName].timestep(Ns=Ns,inf=inf)
+            phages[phageName].timestep(Ns=Ns,inf=inf, l=l)
 
             
 
             if n == 0:
                 continue
 
-            newPhages += self.phageMutation(phage.beta, inf*0.5, p=m, phage=deepcopy(phage))
+            newPhages += self.phageMutation(phage.beta, inf*l, p=m, phage=deepcopy(phage))
 
         newPhages_dict = {phage.name:phage for phage in newPhages}
 
@@ -178,11 +183,15 @@ class Community():
         time3 = timeit.default_timer()
         self.populations = pops
         self.phages = finalPhages
+        
         self.__updateComSize()
+        time4 = timeit.default_timer()
+        time5 = timeit.default_timer()
         self.__updateStrainPhageDF()
+        time6 =timeit.default_timer()
         self.resOverTime.append(totalResistant)
         self.vulnOverTime.append(totalVulnerable)
-        time4 = timeit.default_timer()
+        self.dfTimes.append(time6-time5)
         self.otherTimes.append(time2-time1 + time4-time3)
         return None
 
@@ -198,26 +207,46 @@ class Community():
 
     def vulnerableStrains(self, phageGenome:str, receptorName:str):
         """returns a dict of vulnerable strains to the phage"""
-        pops = self.populations
-        vStrains = set()
-
-        for pop in pops.values():
-
-            vStrains.update( pop.vulnerableStrains(phageGenome,receptorName) )#  all vulnerable strains from each population
+        strains = self.strains
+        # vStrains = set()
+        vStrains = { 
+            strain:
+                True if strain.isVulnerable(receptorName) 
+                    and not strain.isImmune(phageGenome) 
+                else False 
+                for strain in strains.values() 
+            }
+        
 
         return vStrains
+    # def vulnStrains(self, col:pd.Series):
+    #     """returns a dict of vulnerable strains to the phage"""
+    #     strains = col.index
+    #     phage = col.name
+    #     genome = phage.genome
+    #     receptor = phage.receptor.name
 
-    def totalVulnerable(self, phageName:str) -> float:
+    #     x = pd.Series(True, name = phage, index = strains)
+
+    #     for strain, isVulnerable in col.iteritems():
+
+    #         x.loc[strain] = strain.isVulnerable(receptor) and not strain.isImmune(genome)
+
+    #     # strains.where(strains.isImmune(phage.genome) & strains.isVulnerable(phage.receptor.name), False)
+
+    #     return x
+
+    def totalVulnerable(self, phage:str) -> float:
         """returns the total number of vulnerable and infected hosts for a specific phage"""
         vuln = 0
 
-        areStrainsVulnerable = self.StrainPhageDF[phageName]
+        areStrainsVulnerable = self.StrainPhageDF[phage]
 
-        for strainName, isVulnerable in areStrainsVulnerable.items():
+        for strain, isVulnerable in areStrainsVulnerable.items():
 
             if isVulnerable:
 
-                vuln += self.strains[strainName].pop
+                vuln += self.strains[strain.name].pop
         
         return vuln
         
@@ -228,11 +257,11 @@ class Community():
         phages = dict() # dict of phageName:phage
         strainNames = set(pop.strains.keys())
 
-        for strainName, row in self.StrainPhageDF.iterrows():
+        for strain, row in self.StrainPhageDF.iterrows():
 
-            if strainName in strainNames:
+            if strain.name in strainNames:
 
-                phages[strainName] = {phageName:self.phages[phageName] for phageName, infects in row.items() if infects}
+                phages[strain.name] = {phage.name:self.phages[phage.name] for phage, infects in row.items() if infects}
 
         return phages
 
@@ -273,7 +302,7 @@ class Community():
             receptor=phage.receptor,
             genome=newGenome, 
             fitness = fitness,
-            pop = 100
+            pop = 1
         )
         
         return newPhage
@@ -309,28 +338,28 @@ class Community():
 
         return None
 
-    def __initStrainPhageDF(self):
-        """
-        Creates dataframe for identifying which strains are vulnerable to which phage.
-        Rows are strain names, columns are phage names.
-        Each entry is a boolean. 
-        """
+    # def __initStrainPhageDF(self):
+    #     """
+    #     Creates dataframe for identifying which strains are vulnerable to which phage.
+    #     Rows are strain names, columns are phage names.
+    #     Each entry is a boolean. 
+    #     """
 
-        strains = self.strains
+    #     strains = self.strains
 
-        df = pd.DataFrame(None, index = strains.keys(), columns=self.phages.keys())
+    #     df = pd.DataFrame(None, index = strains.keys(), columns=self.phages.keys())
 
-        for phageName, phage in self.phages.items():
+    #     for phageName, phage in self.phages.items():
 
-            vStrains = self.vulnerableStrains(phageGenome=phage.genome, receptorName=phage.receptor.name)
-            # print(vStrains) 
-            Strains = {strainName:(strain in vStrains) for strainName, strain in strains.items()} # which strains are vulnerable to this phage
+    #         vStrains = self.vulnerableStrains(phageGenome=phage.genome, receptorName=phage.receptor.name)
+    #         # print(vStrains) 
+    #         Strains = {strainName:(strain in vStrains) for strainName, strain in strains.items()} # which strains are vulnerable to this phage
 
-            df[phageName] = df.index.map(Strains)
+    #         df[phageName] = df.index.map(Strains)
 
-        self.StrainPhageDF = df
+    #     self.StrainPhageDF = df
 
-        return None
+    #     return None
         
     def __updateStrainPhageDF(self):
         """
@@ -340,19 +369,32 @@ class Community():
         """
 
         strains = self.strains
+        phages = self.phages
 
-        df = pd.DataFrame(None, index = strains.keys(), columns=self.phages.keys())
-
-        for phageName, phage in self.phages.items():
-
-            vStrains = self.vulnerableStrains(phageGenome=phage.genome, receptorName=phage.receptor.name)
-            # print(vStrains) 
-            Strains = {strainName:(strain in vStrains) for strainName, strain in strains.items()} # which strains are vulnerable to this phage
-
-            df[phageName] = df.index.map(Strains)
-
+        df = pd.DataFrame(True, index = strains.values(), columns=self.phages.values())
+        # t1 = timeit.default_timer()
+        df = df.apply(
+            lambda col: 
+                pd.Series(
+                    self.vulnerableStrains( 
+                        col.name.genome,
+                        col.name.receptor.name 
+                        )
+                    ),
+            axis=0
+        )
+        # t2 = timeit.default_timer()
+        # t3 = timeit.default_timer()
+        # df = df.apply(
+        #     lambda col: 
+        #         pd.Series(self.vulnStrains(col)),
+        #     axis=0
+        # )
+        # # if self.StrainPhageDF != df: raise NameError("stupid")
+        # t4 = timeit.default_timer()
         self.StrainPhageDF = df
 
+        print((t4-t3)/(t2-t1))
         return None
     
     def __updateInfections(self, phageName:str, oldInfections:dict, newInfections:float)->float:

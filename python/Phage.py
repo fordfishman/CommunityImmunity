@@ -47,12 +47,11 @@ class Phage():
     Main timestep function
     """
 
-    def timestep(self, Ns:float, inf:float):
+    def timestep(self, Ns:float, inf:float, l:float):
         """
         Ns (float): number of susceptible hosts
-        bP (float): burst size of phage
-        absP (float): absorption rate of phage
-        dP (float): decay rate of phage  
+        inf:
+        l:
         """
 
         absp = self.absp
@@ -63,7 +62,7 @@ class Phage():
 
         
         # self.__pop += absp*(beta-1)*Ns*Np*self.__fitness - d*Np
-        self.pop += 0.5*beta*inf - absp*Np*Ns - d*Np
+        self.pop += l*beta*inf - absp*Np*Ns - d*Np
         # something is up with the latent phage mutations: new phages are instantly dying
         # if beta*inf < 1 and self.pop < 1: self.pop = 0
         if self.pop < 1: self.pop = 0

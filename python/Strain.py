@@ -74,7 +74,7 @@ class Strain():
     """
     Main timestep function
     """
-    def timestep(self, N:int, absP:float):
+    def timestep(self, N:int, absP:float, l:float):
         """
         N (int): total host density
         a (float): competition coefficient
@@ -83,6 +83,7 @@ class Strain():
         absP (float): number of absorbed phages per host
         p (float): phage density
         y (float):
+        l (float):
         """
 
         a = self.a
