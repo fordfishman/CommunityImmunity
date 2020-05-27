@@ -107,22 +107,29 @@ def testFunc(*args, b=""):
 
         
 import pandas as pd
-import numpy as np
+# import numpy as np
 
-d = {
-    "a":{"1":True,"2":True,"3":False},
-    "b":{"1":True,"2":True,"3":False},
-    "c":{"1":True,"2":True,"3":False}
-}
+# d = {
+#     "a":{"1":True,"2":True,"3":False},
+#     "b":{"1":True,"2":True,"3":False},
+#     "c":{"1":True,"2":True,"3":False}
+# }
 
-def func(val):
-    b = {"5":"five","6":"six","4":"four"}
-    n = val.index
-    # print(val.where(val is dict,"not dict"))
+# s = pd.Series(data = {"a":1,"b":2,"c":3})
+# print(s)
+# s["a"] = "beeg"
+# print(s["a"])
+
+# def func(val):
+#     b = {"5":"five","6":"six","4":"four"}
+#     n = val.index
+#     # print(val.where(val is dict,"not dict"))
 
 
 
 
-df = pd.DataFrame({1:1}, index=([1,2],[3,4],[5,6]), columns=(1,2,3))
-df1 = df.apply(lambda col:func(col),axis=0)
-print(df)
+df = pd.DataFrame(None, columns=("a","b","c"))
+df.loc[0] = df.columns.map(pd.Series({"a":1,"b":3,"c":3}))
+df.loc[1] = df.columns.map(pd.Series({"b":29,"a":3,"c":3}))
+# df1 = df.apply(lambda col:func(col),axis=0)
+# print(df)

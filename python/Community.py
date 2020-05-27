@@ -15,7 +15,10 @@ class Community():
     k (int): carrying capacity
     """
 
-    def __init__(self, populations:dict, phages:dict=None):
+    def __init__(self, pS, m, l, populations:dict, phages:dict=None):
+        self.pS = pS
+        self.m = m
+        self.l = l
         self.populations = populations
         self.strains = dict()
         self.phages = phages
@@ -36,48 +39,6 @@ class Community():
     """
     Attribute functions
     """
-
-    # def getPopulation(self, popName):
-
-    #     try: 
-    #         self.populations[popName]
-
-    #     except KeyError:
-    #         print("Population does not exist")
-
-    #     else: 
-    #         return self.populations[popName]
-
-    # def getPhage(self, phageName):
-
-    #     try: 
-    #         self.phages[phageName]
-
-    #     except KeyError:
-    #         print("Phage does not exist")
-
-    #     else: 
-    #         return self.phages[phageName]
-    
-
-    # def totalComSize(self):
-    #     return self.__totalComSize
-
-    # def comSizeOverTime(self):
-    #     return self.__comSizeOverTime
-    
-    # def resOverTime(self):
-    #     return self.__resOverTime
-    
-    # def vulnOverTime(self):
-    #     return self.__vulnOverTime
-
-    # def phagePopOverTime(self):
-    #     return self.__phagePopOverTime
-    
-    # def phages(self):
-    #     """Remove, only using for testing"""
-    #     return self.__phages
 
     def richness(self)->int:
         """Returns strain richness for entire community"""
@@ -103,7 +64,7 @@ class Community():
     """
     Main timestep function
     """
-    def timestep(self, step:int, pS:float, m:float, l:float):
+    def timestep(self, step:int):
         """
         N (int): total community size
         a (float): competition coefficient
@@ -119,6 +80,9 @@ class Community():
         time1 = timeit.default_timer()
         pops = deepcopy(self.populations)
         phages = deepcopy(self.phages)
+        pS = self.pS
+        m = self.m
+        l = self.l
         totalResistant = 0
         totalVulnerable = 0
         infected = dict()
@@ -127,8 +91,6 @@ class Community():
 
         time2 = timeit.default_timer()
         
-
-
         t0 = timeit.default_timer()
 
         for popName, pop in pops.items():
@@ -144,6 +106,7 @@ class Community():
 
             totalResistant += pop.resSize
             totalVulnerable += pop.vulnSize
+
         t1 = timeit.default_timer()
 
         self.strainTimes.append(t1-t0)
@@ -166,8 +129,6 @@ class Community():
 
             phages[phageName].timestep(Ns=Ns,inf=inf, l=l)
 
-            
-
             if n == 0:
                 continue
 
@@ -188,7 +149,7 @@ class Community():
         time4 = timeit.default_timer()
         time5 = timeit.default_timer()
         self.__updateStrainPhageDF()
-        time6 =timeit.default_timer()
+        time6 = timeit.default_timer()
         self.resOverTime.append(totalResistant)
         self.vulnOverTime.append(totalVulnerable)
         self.dfTimes.append(time6-time5)
@@ -200,10 +161,6 @@ class Community():
     """
     Other functions
     """
-
-    def infection(self):
-        """might add this in with IBM"""
-        pass
 
     def vulnerableStrains(self, phageGenome:str, receptorName:str):
         """returns a dict of vulnerable strains to the phage"""
@@ -265,10 +222,6 @@ class Community():
 
         return phages
 
-    def infectedHosts(self):
-        """
-        """
-        pass
 
     def phagesPopDict(self):
         """
@@ -394,7 +347,7 @@ class Community():
         # t4 = timeit.default_timer()
         self.StrainPhageDF = df
 
-        print((t4-t3)/(t2-t1))
+        # print((t4-t3)/(t2-t1))
         return None
     
     def __updateInfections(self, phageName:str, oldInfections:dict, newInfections:float)->float:
