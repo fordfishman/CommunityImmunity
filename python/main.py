@@ -8,22 +8,53 @@ import numpy as np; import pandas as pd; import sys
 import argparse
 import Strain; import Population; import Community; import Phage; import PhageReceptor; import Crispr
 import general as gen
+import timeit; from progressbar import progressbar
 
 """
 Setting up arguments
 """
 parser = argparse.ArgumentParser()
 # parser.add_argument('-pS', default=None)
-parser.add_argument('-o','--output', default = 'comim', help = "Desired name of output path")
-arguments = parser.parse_args()
+parser.add_argument('-o','--output', default='comim', type=str, help="Desired name of output path")
+parser.add_argument('-t','--timesteps', default=1000, type=int, help="Number of timesteps in each simulation")
+parser.add_argument('-s','--single', default=False, type=bool, help='Whether or not to run the program in single simulation mode')
+parser.add_argument('-S','--sims', default=100, type=int, help="Number of simulations to run (--single must be False)")
+parser.add_argument('-pS', default=None, type=float, help="probability of spacer formation per infection")
+parser.add_argument('-m', default=None, type=float, help="phage mutation rate per nt")
+parser.add_argument('-b', default=None, type=float, help="host per capita growth rate")
+parser.add_argument('-a', default=None, type=float, help="region where density dependence sets in for hosts")
+parser.add_argument('-c', default=None, type=float, help="cost of CRISPR")
+parser.add_argument('--absp', default=None, type=float, help="absorbtion rate of phage")
+parser.add_argument('--beta', default=None, type=float, help="burst size of phage")
+parser.add_argument('-d', default=None, type=float, help="phage decay rate per timestep")
+parser.add_argument('-l', default=None, type=float, help="proportion of infections that lead to bursting each timestep")
+parser.add_argument('--popinit',default=None, type=float, help="initial host population")
+parser.add_argument('--phageinit',default=None, type=float, help="initial phage population")
+
+arguments = parser.parse_args(['-b','2'])
 out = arguments.output
+timesteps = arguments.timesteps
+single_run = arguments.single
+sims = arguments.sims
+pS = arguments.pS
+m = arguments.m
+b = arguments.b
+a = arguments.a
+c = arguments.c
+absp = arguments.absp
+beta = arguments.beta
+d = arguments.d
+l = arguments.l
+popinit = arguments.popinit
+phageinit = arguments.phageinit
+
 
 """
 Parameters
 """
 
 
-timesteps = 1000
+# timesteps = 1000
 # host parameters
 # pS = 10**-6 # prob of spacer forming if infection occurs per host
 # b = 1.2 # initial max intrinsic growth of hosts
@@ -42,33 +73,34 @@ y = 1 # rate of density dependence setting in around a, y = 1 makes classic beve
 Functions called by main
 """
 
-def initialize(**kw):
+def initialize():
     """
     Set up initial strains and phages
     Return: com (Community)
     """
     from numpy.random import uniform as uni, randint
     params = {"pS", "b", "a", "c", "beta", "absp", "d", "m", "l", "popinit", "phageinit"}
+    param_dict = dict() # will contain parameters already specified at the command line
     
-    for arg in kw:
-        if arg not in params:
-            print("Unknown parameter passed")
-            sys.exit()
+    for arg,val in globals().items():
+        if arg in params and not val is None:
+            param_dict[arg] = val
+
 
     # if parameters aren't specified, draw them from distributions
-    pS = kw.get( "pS", 10**-( uni(6,9) ) ) # default: random float 10^-5 - 10^-9
-    b = kw.get( "b", uni(0.9, 2) )
-    a = kw.get("a", 10**( uni(5,8) ) )
-    c = kw.get( "c", 10**-( uni(0,3) ) )
+    pS = param_dict.get( "pS", 10**-( uni(6,9) ) ) # default: random float 10^-5 - 10^-9
+    b = param_dict.get( "b", uni(0.9, 2) )
+    a = param_dict.get("a", 10**( uni(5,8) ) )
+    c = param_dict.get( "c", 10**-( uni(1,3) ) )
     
-    beta = kw.get( "beta", randint(1,200) ) # default: random int from 1-200
-    absp = kw.get( "absp", 10**-( uni(7,9) ) )
-    d = kw.get( "d", uni(0.0, 0.3) )
-    m = kw.get( "m", 10**-( uni(6,9) ) )
-    l = kw.get( "l", uni(0.0, 1.0) )
+    beta = param_dict.get( "beta", randint(50,200) ) # default: random int from 1-200
+    absp = param_dict.get( "absp", 10**-( uni(7,9) ) )
+    d = param_dict.get( "d", uni(0.0, 0.3) )
+    m = param_dict.get( "m", 10**-( uni(6,9) ) )
+    l = param_dict.get( "l", uni(0.0, 1.0) )
 
-    popinit = kw.get( "popinit", 10**( uni(5,7) ) )
-    phageinit = kw.get( "phageinit", 10**( uni(5,7) ))
+    popinit = param_dict.get( "popinit", 10**( uni(5,7) ) )
+    phageinit = param_dict.get( "phageinit", 10**( uni(5,7) ))
 
     receptor1 = PhageReceptor.PhageReceptor( name = "r1" ) # change numbering system
 
@@ -89,23 +121,23 @@ def initialize(**kw):
         absp = absp,beta = beta, d = d,
         receptor = receptor1,
         pop = phageinit,
-        genomeLength=10**3
+        genomeLength=1000
     )
 
 
-    pop1 = Population.Population(
-        name = "pop1",
-        strains = {
-            strain1.name: strain1
-        } 
-    )
+    # pop1 = Population.Population(
+    #     name = "pop1",
+    #     strains = {
+    #         strain1.name: strain1
+    #     } 
+    # )
 
 
 
     com = Community.Community(
         pS=pS,m=m,l=l,
-        populations = {
-            pop1.name: pop1
+        strains = {
+            strain1.name: strain1
         },
         phages = {
             phage1.name: phage1
@@ -116,7 +148,7 @@ def initialize(**kw):
         data = {
             "pop":None,
             "phage":None,
-            "resistant":None,
+            "immune":None,
             "vulnerable":None,
             "richness":None,
             "phageRichness":None,
@@ -145,12 +177,17 @@ def initialize(**kw):
 Main function for running simulation
 """
 def main():
+    if single_run:
+        one_sim()
+    else:
+        multi_sim(sims)
     # one_sim()
     # one_sim(m=0, pS=0)
-    multi_sim(1)
+    # multi_sim(1000, m=0)
+    # multi_sim(1000, m = 10**-7, pS=10**-5, beta=100,absp=10**-8, d = 0.1, c=0)
     return None
 
-def one_sim(**kw):
+def one_sim():
 
     """
     Runs a single simulation with given parameters
@@ -158,7 +195,7 @@ def one_sim(**kw):
     outputMain = out + "_main.csv"
     outputRichness = out + "_richness.csv"
 
-    community = initialize(**kw)
+    community = initialize()
     
     # params = {"pS", "b", "a", "c", "beta", "absp", "d", "m", "l", "popinit", "phageinit"}
     print("pS:\t%s"%community.pS)
@@ -186,7 +223,7 @@ def one_sim(**kw):
 
     timestep = community.timestep
 
-    for i in range(timesteps): # run for # of timesteps
+    for i in progressbar(range(timesteps)): # run for # of timesteps
         
         timestep(i)
         pRichness.append( len( community.phagesPopDict() ) )
@@ -200,7 +237,7 @@ def one_sim(**kw):
 
     community.summary["pop"] = community.totalComSize
     community.summary["phage"] = community.phagePopOverTime[-1]
-    community.summary["resistant"] = community.resOverTime[-1]
+    community.summary["immune"] = community.imOverTime[-1]
     community.summary["vulnerable"] = community.vulnOverTime[-1]
 
     print(community.summary)
@@ -226,18 +263,18 @@ def one_sim(**kw):
     # print("Other times:")
     # print("max: %s\tmean: %s" % (max(community.otherTimes), stat.mean(community.otherTimes)))
     # print()
-    # print("max resistant: %s"%(max(community.resOverTime)))
+    # print("max immune: %s"%(max(community.imOverTime)))
     df1 = pd.DataFrame( 
         list( 
             zip(
                 community.comSizeOverTime, 
                 community.phagePopOverTime,
-                community.resOverTime,
+                community.imOverTime,
                 community.vulnOverTime, 
                 range(1,timesteps+1), 
                 ) 
             ),
-        columns= ['host','phage','resistant','vulnerable','time'],
+        columns= ['host','phage','immune','vulnerable','time'],
         )
     # cols = [ "strain"+str(i) for i in range(0,len(cRichness)) ]
     df2 = pd.DataFrame( 
@@ -257,26 +294,34 @@ def one_sim(**kw):
     #     print(phage.genome)
     return None
 
-def multi_sim(sims, **kw):
+def multi_sim(sims):
 
+    params = {"pS", "b", "a", "c", "beta", "absp", "d", "m", "l", "popinit", "phageinit"}
+    constant_params = sorted(["_%s%s" % (param,globals()[param]) for param in params if not globals()[param] is None]) 
 
-    communities = [ initialize(**kw) for i in range(sims) ]
+    communities = [ initialize() for i in range(sims) ]
 
     # output name for run uses provided output name, number of sims, set parameters
-    constant_params = sorted(["_%s%s" % (param,val) for param, val in kw.items()]) 
-    output = "%s_%ssims%s.csv" % (out, sims, "".join(constant_params)) 
+
+    output = "%s%ssims%s.csv" % (out, sims, "".join(constant_params)) 
 
     timestep = [ community.timestep for community in communities ] # list of all timestep functions for all sims
     # print("initial sizes")
     # for community in communities:
     #     print(community.totalComSize)
     df = pd.DataFrame(None, 
-        columns=["pop","phage","resistant","vulnerable","richness","phageRichness","pS", "b", "a", "c", "beta", "absp", "d", "m", "l", "popinit", "phageinit"],
+        columns=["pop","phage","immune","vulnerable","richness","phageRichness","pS", "b", "a", "c", "beta", "absp", "d", "m", "l", "popinit", "phageinit"],
     )
     
     timesteps = 1000
+    times_com = list()
+    times_timestep = list()
+    times_remaining = list()
+    times_ratio = list()
+
     
-    for ind in range( len(communities) ):
+    for ind in progressbar(range( len(communities) )):
+        t0 = timeit.default_timer()
         community = communities[ind]
         pRichness = [len( community.phagesPopDict() )] # phage richness over time
         maxPRich = pRichness[0]
@@ -284,24 +329,44 @@ def multi_sim(sims, **kw):
         maxSRich = sRichness[0]
 
         for i in range(timesteps):
-
+            time0 = timeit.default_timer()
             timestep[ind](i)
+            time1=timeit.default_timer()
+            time2=timeit.default_timer()
             pRichness.append( len( community.phagesPopDict() ) )
             maxPRich = max(pRichness)
             sRichness.append( community.richness() )
             maxSRich = max(sRichness)
 
-            community.summary["richness"] = maxSRich
-            community.summary["phageRichness"] = maxPRich 
+ 
+            time3=timeit.default_timer()
+            times_timestep.append(time1-time0)
+            times_remaining.append(time3-time2)
+            times_ratio.append(times_timestep[-1]/times_remaining[-1])
 
+        community.summary["richness"] = maxSRich
+        community.summary["phageRichness"] = maxPRich 
         community.summary["pop"] = community.totalComSize
         community.summary["phage"] = community.phagePopOverTime[-1]
-        community.summary["resistant"] = community.resOverTime[-1]
+        community.summary["immune"] = community.imOverTime[-1]
         community.summary["vulnerable"] = community.vulnOverTime[-1]
 
         df.loc[ind] = df.columns.map( community.summary )
+        t1 = timeit.default_timer()
+        times_com.append(t1-t0)
 
+    import statistics as stat
+    print("Time per sim:")
+    print("max: %s\tmean: %s" % (max(times_com), stat.mean(times_com)))
 
+    print("Time per timestep:")
+    print("max: %s\tmean: %s" % (max(times_timestep), stat.mean(times_timestep)))
+
+    print("Time left:")
+    print("max: %s\tmean: %s" % (max(times_remaining), stat.mean(times_remaining)))
+
+    print("Ratio:")
+    print("max: %s\tmean: %s" % (max(times_ratio), stat.mean(times_ratio)))
 
     # print("after sizes")
     # for community in communities:

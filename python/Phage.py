@@ -33,6 +33,8 @@ class Phage():
         self.absp = absp
         self.beta = beta
         self.d = d
+        self.newInfections = 0
+        self.lysisEvents = 0
 
         if not genome is None: 
             self.genome = genome
@@ -47,26 +49,29 @@ class Phage():
     Main timestep function
     """
 
-    def timestep(self, Ns:float, inf:float, l:float):
+    def timestep(self):
         """
         Ns (float): number of susceptible hosts
         inf:
         l:
         """
 
-        absp = self.absp
+        # absp = self.absp
         beta = self.beta
         d = self.d
 
         Np = self.pop # phage pop
-
+        newInf = self.newInfections
+        lysisEvents = self.lysisEvents
         
         # self.__pop += absp*(beta-1)*Ns*Np*self.__fitness - d*Np
-        self.pop += l*beta*inf - absp*Np*Ns - d*Np
-        # something is up with the latent phage mutations: new phages are instantly dying
+        # self.pop += l*beta*inf - absp*Np*Ns - d*Np
+        self.pop += beta*lysisEvents - newInf - d*Np
         # if beta*inf < 1 and self.pop < 1: self.pop = 0
         if self.pop < 1: self.pop = 0
 
+        self.lysisEvents = 0
+        self.newInfections = 0
         return None
 
 ##########################################################################################################
