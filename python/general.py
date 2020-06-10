@@ -133,14 +133,14 @@ df.loc[0] = df.columns.map(pd.Series({"a":1,"b":3,"c":3}))
 df.loc[1] = df.columns.map(pd.Series({"b":29,"a":3,"c":3}))
 # df1 = df.apply(lambda col:func(col),axis=0)
 # print(df)
-import argparse
+# import argparse
 
-parser = argparse.ArgumentParser()
+# parser = argparse.ArgumentParser()
 
-parser.add_argument('-p')
-parser.add_argument('-pS')
-parser.add_argument('--absp')
-parser.add_argument('-o','--output', default='comim', type=str, help="Desired name of output path")
+# parser.add_argument('-p')
+# parser.add_argument('-pS')
+# parser.add_argument('--adsp')
+# parser.add_argument('-o','--output', default='comim', type=str, help="Desired name of output path")
 
-arg = parser.parse_args(["-pS","2"])
-print(arg.pS)
+# arg = parser.parse_args(["-pS","2"])
+# print(arg.pS)

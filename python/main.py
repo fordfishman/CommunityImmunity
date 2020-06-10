@@ -24,14 +24,14 @@ parser.add_argument('-m', default=None, type=float, help="phage mutation rate pe
 parser.add_argument('-b', default=None, type=float, help="host per capita growth rate")
 parser.add_argument('-a', default=None, type=float, help="region where density dependence sets in for hosts")
 parser.add_argument('-c', default=None, type=float, help="cost of CRISPR")
-parser.add_argument('--absp', default=None, type=float, help="absorbtion rate of phage")
-parser.add_argument('--beta', default=None, type=float, help="burst size of phage")
+parser.add_argument('--adsp', default=None, type=float, help="adsorption rate of phage")
+parser.add_argument('--beta', default=None, type=int, help="burst size of phage")
 parser.add_argument('-d', default=None, type=float, help="phage decay rate per timestep")
 parser.add_argument('-l', default=None, type=float, help="proportion of infections that lead to bursting each timestep")
 parser.add_argument('--popinit',default=None, type=float, help="initial host population")
 parser.add_argument('--phageinit',default=None, type=float, help="initial phage population")
 
-arguments = parser.parse_args(['-b','2'])
+arguments = parser.parse_args()
 out = arguments.output
 timesteps = arguments.timesteps
 single_run = arguments.single
@@ -41,7 +41,7 @@ m = arguments.m
 b = arguments.b
 a = arguments.a
 c = arguments.c
-absp = arguments.absp
+adsp = arguments.adsp
 beta = arguments.beta
 d = arguments.d
 l = arguments.l
@@ -64,7 +64,7 @@ y = 1 # rate of density dependence setting in around a, y = 1 makes classic beve
 
 # phage parameters
 # beta = 10 # burst size of phage
-# absp = 10**-7 # absorbtion rate of phage
+# adsp = 10**-7 # adsorption rate of phage
 # d = 0.1 # natural decay rate of phage
 # m = 10**-6 # phage mutation rate per nt
 # l = 0.5 # proportion of infections that lead to bursting each timestep
@@ -79,7 +79,7 @@ def initialize():
     Return: com (Community)
     """
     from numpy.random import uniform as uni, randint
-    params = {"pS", "b", "a", "c", "beta", "absp", "d", "m", "l", "popinit", "phageinit"}
+    params = {"pS", "b", "a", "c", "beta", "adsp", "d", "m", "l", "popinit", "phageinit"}
     param_dict = dict() # will contain parameters already specified at the command line
     
     for arg,val in globals().items():
@@ -94,7 +94,7 @@ def initialize():
     c = param_dict.get( "c", 10**-( uni(1,3) ) )
     
     beta = param_dict.get( "beta", randint(50,200) ) # default: random int from 1-200
-    absp = param_dict.get( "absp", 10**-( uni(7,9) ) )
+    adsp = param_dict.get( "adsp", 10**-( uni(7,9) ) )
     d = param_dict.get( "d", uni(0.0, 0.3) )
     m = param_dict.get( "m", 10**-( uni(6,9) ) )
     l = param_dict.get( "l", uni(0.0, 1.0) )
@@ -118,7 +118,7 @@ def initialize():
 
     phage1 = Phage.Phage(
         name = "p1",
-        absp = absp,beta = beta, d = d,
+        adsp = adsp,beta = beta, d = d,
         receptor = receptor1,
         pop = phageinit,
         genomeLength=1000
@@ -157,7 +157,7 @@ def initialize():
             "a":a, 
             "c":c, 
             "beta":beta, 
-            "absp":absp, 
+            "adsp":adsp, 
             "d":d, 
             "m":m, 
             "l":l, 
@@ -184,7 +184,7 @@ def main():
     # one_sim()
     # one_sim(m=0, pS=0)
     # multi_sim(1000, m=0)
-    # multi_sim(1000, m = 10**-7, pS=10**-5, beta=100,absp=10**-8, d = 0.1, c=0)
+    # multi_sim(1000, m = 10**-7, pS=10**-5, beta=100,adsp=10**-8, d = 0.1, c=0)
     return None
 
 def one_sim():
@@ -197,13 +197,13 @@ def one_sim():
 
     community = initialize()
     
-    # params = {"pS", "b", "a", "c", "beta", "absp", "d", "m", "l", "popinit", "phageinit"}
+    # params = {"pS", "b", "a", "c", "beta", "adsp", "d", "m", "l", "popinit", "phageinit"}
     print("pS:\t%s"%community.pS)
     print("b:\t%s"%community.strains["s1"].b)
     print("a:\t%s"%community.strains["s1"].a)
     print("c:\t%s"%community.strains["s1"].c)
     print("beta:\t%s"%community.phages["p1"].beta)
-    print("absp:\t%s"%community.phages["p1"].absp)
+    print("adsp:\t%s"%community.phages["p1"].adsp)
     print("d:\t%s"%community.phages["p1"].d)
     print("m:\t%s"%community.m)
     print("l:\t%s"%community.l)
@@ -296,7 +296,7 @@ def one_sim():
 
 def multi_sim(sims):
 
-    params = {"pS", "b", "a", "c", "beta", "absp", "d", "m", "l", "popinit", "phageinit"}
+    params = {"pS", "b", "a", "c", "beta", "adsp", "d", "m", "l", "popinit", "phageinit"}
     constant_params = sorted(["_%s%s" % (param,globals()[param]) for param in params if not globals()[param] is None]) 
 
     communities = [ initialize() for i in range(sims) ]
@@ -310,7 +310,7 @@ def multi_sim(sims):
     # for community in communities:
     #     print(community.totalComSize)
     df = pd.DataFrame(None, 
-        columns=["pop","phage","immune","vulnerable","richness","phageRichness","pS", "b", "a", "c", "beta", "absp", "d", "m", "l", "popinit", "phageinit"],
+        columns=["pop","phage","immune","vulnerable","richness","phageRichness","pS", "b", "a", "c", "beta", "adsp", "d", "m", "l", "popinit", "phageinit"],
     )
     
     timesteps = 1000

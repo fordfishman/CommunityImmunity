@@ -48,8 +48,6 @@ class Strain():
         a (float): competition coefficient
         b (float): intrinsic growth rate
         c (float): cost of crispr
-        absP (float): number of absorbed phages per host
-        p (float): phage density
         y (float):
         l (float):
         """

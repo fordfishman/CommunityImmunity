@@ -98,13 +98,13 @@ class Population():
             
             phages = p[strainName] # the phages infecting this strain
             
-            absorbedPhages = 0
+            adsorbedPhages = 0
 
             for phage in phages.values():
 
-                absorbedPhages += phage.pop*phage.absp
+                adsorbedPhages += phage.pop*phage.adsp
 
-                n = self.__activeInfections(phage.absp, strain, phage, l)  # number of infections
+                n = self.__activeInfections(phage.adsp, strain, phage, l)  # number of infections
 
                 self.infected[phage.name] = n
 
@@ -113,7 +113,7 @@ class Population():
                 
                 newStrains += self.newSpacer(n,p=pS,strain=strain, phage=phage) 
 
-            strains[strainName].timestep(N=N,absP=absorbedPhages, l=l)
+            strains[strainName].timestep(N=N,adsP=adsorbedPhages, l=l)
             if strain.hasCost():
                 resSize += strains[strainName].pop
             else:
@@ -257,11 +257,11 @@ class Population():
 
         return total
 
-    def __activeInfections(self, absP:float, strain:Strain, phage:Phage,l:float):
+    def __activeInfections(self, adsP:float, strain:Strain, phage:Phage,l:float):
         """
         Returns current number of infections due to this phage
         """
-        newInfections = strain.pop*absP*phage.pop
+        newInfections = strain.pop*adsP*phage.pop
         phageName = phage.name
         totalInfections = 0
         oldInfections = self.infected.get(phageName, 0)

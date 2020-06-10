@@ -68,7 +68,7 @@ class Community():
         c (float): cost of crispr
         y (float):
         bP (float): phage birth rate
-        absP (float): aborption rate of phage
+        adsP (float): aborption rate of phage
         dP (float): decay rate of phage
         pS (float): probability of spacer forming during infection per host
         """
@@ -110,7 +110,7 @@ class Community():
                 # consider changing exinction parameters
 
                 if strain.isInfectable(phage): # can phage infect this host?
-                    newInfections = phage.pop*phage.absp*strain.pop
+                    newInfections = phage.pop*phage.adsp*strain.pop
 
                 else:
                     newInfections = 0
@@ -300,7 +300,7 @@ class Community():
 
         newPhage = Phage(
             name=newName, 
-            absp = phage.absp, 
+            adsp = phage.adsp, 
             beta = phage.beta, 
             d = phage.d, 
             receptor=phage.receptor,
