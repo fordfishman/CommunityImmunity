@@ -3,13 +3,15 @@
 #PBS -l nodes=1:ppn=1,walltime=10:00:00
 #PBS -M ffishman@iu.edu
 #PBS -m abe 
-#PBS -N test
+#PBS -N multi_im
 #PBS -j oe 
 
 
 # Set pathing
 # sourcepath=/geode2/home/u030/ffishman/Carbonate/thindrives/fordfishman/GitHub/CommunityImmunity
 cwd=$(pwd)
+
+sourcepath=$cwd/GitHub/CommunityImmunity
 
 python=$sourcepath/python
 r=$sourcepath/r
