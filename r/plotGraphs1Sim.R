@@ -39,7 +39,7 @@ p1 <- ggplot(df1, aes(x=time,y=density))+
         geom_line(aes(color=organism)) +
         scale_y_log10() +
         scale_linetype_discrete() +
-        scale_color_manual("", values = c("blue","red","green","black")) +
+        scale_color_manual("", limits = c("host", "phage","immune","vulnerable"), values = c("blue","red","green","black")) +
         theme(panel.grid.major = element_blank(), 
               panel.grid.minor = element_blank(),
               panel.background = element_blank(), 

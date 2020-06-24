@@ -106,60 +106,41 @@ def testFunc(*args, b=""):
     
 
         
-# print(testFunc(2,3, b = "Asd"))
+import pandas as pd
+# import numpy as np
 
-# NUCLEOTIDES = ("A","C","G","T")
+# d = {
+#     "a":{"1":True,"2":True,"3":False},
+#     "b":{"1":True,"2":True,"3":False},
+#     "c":{"1":True,"2":True,"3":False}
+# }
 
-# class Test():
+# s = pd.Series(data = {"a":1,"b":2,"c":3})
+# print(s)
+# s["a"] = "beeg"
+# print(s["a"])
 
-#     @dispatch_on_value
-#     def mutate(self, mutation, genome:str):
-#         pass # only runs if a mutation occurs that's not in thhe class
-        
+# def func(val):
+#     b = {"5":"five","6":"six","4":"four"}
+#     n = val.index
+#     # print(val.where(val is dict,"not dict"))
 
-#     @mutate.register(Mutation.SNP)
-#     def _(self, mutation, genome:str):
 
-#         nt = np.random.choice(NUCLEOTIDES) # the new nucleotide
 
-#         gLength = len(genome) # genome length
-#         i = np.random.choice( range(0, gLength) )
-#         # make genome into a list to change position
-#         genomeList = list(genome) 
-#         genomeList[i] = nt
-#         newGenome = "".join(genomeList)
 
-#         return newGenome
+df = pd.DataFrame(None, columns=("a","b","c"))
+df.loc[0] = df.columns.map(pd.Series({"a":1,"b":3,"c":3}))
+df.loc[1] = df.columns.map(pd.Series({"b":29,"a":3,"c":3}))
+# df1 = df.apply(lambda col:func(col),axis=0)
+# print(df)
+# import argparse
 
-#     @mutate.register(Mutation.DELETION)
-#     def _(self, mutation, genome:str):
-        
-#         gLength = len(genome) # genome length
-#         i = np.random.choice( range(0, gLength) )
-#         # make genome into a list to delete position
-#         genomeList = list(genome)
-#         genomeList.pop(i)
-#         newGenome = "".join(genomeList)
+# parser = argparse.ArgumentParser()
 
-#         return newGenome
+# parser.add_argument('-p')
+# parser.add_argument('-pS')
+# parser.add_argument('--adsp')
+# parser.add_argument('-o','--output', default='comim', type=str, help="Desired name of output path")
 
-# import timeit
-# a = list(range(1000000))
-# c = list()
-# t0 = timeit.default_timer()
-# for i in a:
-#     x = i *4
-#     c.append(x**2)
-#     # c.append(i*3)
-# t1 = timeit.default_timer()
-# print(t1-t0)
-
-# # a = [0]
-# c = list()
-
-# t0 = timeit.default_timer()
-# # b = [i*2 for i in a]
-# c = [(i*3)**2 for i in a]
-
-# t1 = timeit.default_timer()
-# print(t1-t0)
+# arg = parser.parse_args(["-pS","2"])
+# print(arg.pS)

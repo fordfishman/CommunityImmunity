@@ -21,7 +21,7 @@ class Phage():
     # strains (set(str)): set of strains this phage can infect
     """
 
-    def __init__(self, name:str, absp:float, beta:float, d:float, receptor:PhageReceptor, genome:str = None, genomeLength:int = 100, pop:float = 1, fitness:float = 1):
+    def __init__(self, name:str, adsp:float, beta:float, d:float, receptor:PhageReceptor, genome:str = None, genomeLength:int = 100, pop:float = 1, fitness:float = 1):
 
         self.name = name
         self.pop = pop
@@ -30,9 +30,11 @@ class Phage():
         # self.__strains = set()
         # self.__targetPop = targetPop
 
-        self.absp = absp
+        self.adsp = adsp
         self.beta = beta
         self.d = d
+        self.newInfections = 0
+        self.lysisEvents = 0
 
         if not genome is None: 
             self.genome = genome
@@ -47,27 +49,29 @@ class Phage():
     Main timestep function
     """
 
-    def timestep(self, Ns:float, inf:float):
+    def timestep(self):
         """
         Ns (float): number of susceptible hosts
-        bP (float): burst size of phage
-        absP (float): absorption rate of phage
-        dP (float): decay rate of phage  
+        inf:
+        l:
         """
 
-        absp = self.absp
+        # adsp = self.adsp
         beta = self.beta
         d = self.d
 
         Np = self.pop # phage pop
-
+        newInf = self.newInfections
+        lysisEvents = self.lysisEvents
         
-        # self.__pop += absp*(beta-1)*Ns*Np*self.__fitness - d*Np
-        self.pop += 0.5*beta*inf - absp*Np*Ns - d*Np
-        # something is up with the latent phage mutations: new phages are instantly dying
+        # self.__pop += adsp*(beta-1)*Ns*Np*self.__fitness - d*Np
+        # self.pop += l*beta*inf - adsp*Np*Ns - d*Np
+        self.pop += beta*lysisEvents - newInf - d*Np
         # if beta*inf < 1 and self.pop < 1: self.pop = 0
         if self.pop < 1: self.pop = 0
 
+        self.lysisEvents = 0
+        self.newInfections = 0
         return None
 
 ##########################################################################################################

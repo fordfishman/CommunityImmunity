@@ -1,6 +1,7 @@
 ## Ford Fishman
 
 import Spacer; import Crispr; import PhageReceptor
+from Phage import Phage
 import Error as er
 
 ##########################################################################################################
@@ -16,7 +17,7 @@ class Strain():
     intrinsicFitness (float)
     phages (set(str)): names of phages this strain can be infected by
     """
-    def __init__(self, name:str, a:float, b:float, c:float, y:float, crispr:Crispr= None, phReceptors:dict = None, pop:float = 1):
+    def __init__(self, name:str, a:float, b:float, c:float, y:float, crispr:Crispr= None,phReceptors:dict = None, pop:float = 1):
         self.name = name
         self.crispr = crispr
         self.phReceptors = phReceptors
@@ -24,7 +25,7 @@ class Strain():
         self.pop = pop
         self.ipop = 0 # infected pop
         self.intrinsicFitness = 1 # CHANGE THIS AT SOME POINT WHEN I ADD IN RESOURCES
-        self.phages = set()
+        self.infections = dict()
 
         self.a = a
         self.b = b
@@ -38,68 +39,36 @@ class Strain():
                     self.activeReceptors[receptorName] = phReceptors[receptorName]
 
 ##########################################################################################################
-
-    """
-    Attribute functions
-    """
-
-    # def name(self):
-    #     return self.__name
-
-    # def phReceptors(self):
-    #     return self.__phReceptors
-
-    # def getReceptor(self, receptorName:str):
-    #     return self.__phReceptors[receptorName]
-
-    # def crispr(self):
-    #     return self.__crispr
-    
-    # def crisprLength(self):
-    #     return len(self.__crispr)
-
-    # def pop(self):
-    #     return self.__pop
-
-    # def ipop(self):
-    #     return self.__ipop
-
-    # def intrinsicFitness(self):
-    #     return self.__intrinsicFitness
-
-    # def phages(self):
-    #     return (self.__phages)
-
-##########################################################################################################
     """
     Main timestep function
     """
-    def timestep(self, N:int, absP:float):
+    def timestep(self, N:int, l:float):
         """
         N (int): total host density
         a (float): competition coefficient
         b (float): intrinsic growth rate
         c (float): cost of crispr
-        absP (float): number of absorbed phages per host
-        p (float): phage density
         y (float):
+        l (float):
         """
 
         a = self.a
         b = self.b
         c = self.c 
-        y = self.y 
+        y = self.y
+        currentInfections = sum(self.infections.values())
+        self.ipop = currentInfections
 
         if not self.hasCost(): # set cost to 0 if strain does not have CRISPR-associated cost
             c = 0
         
         # fitness 
-        r = b * ( self.intrinsicFitness - c ) - absP # Beverton-Holt Model
-        
-        self.ipop += self.pop*absP - 0.5 * self.ipop # infected pop 
+        # r = b * ( self.intrinsicFitness - c ) - currentInfections # Beverton-Holt Model
+        r = b * ( self.intrinsicFitness - c )
+        # self.ipop += currentInfections - l * self.ipop # infected pop 
             
         # reproduce
-        self.pop = ( r*self.pop )/( 1 + ( N/a )**y ) 
+        self.pop = ( r*self.pop - currentInfections)/( 1 + ( N/a )**y ) 
 
         if self.pop < 1: self.pop = 0
         if self.ipop < 1: self.ipop = 0
@@ -130,18 +99,9 @@ class Strain():
         
         return crispr.hasSpacer( genome = phageGenome )
 
-    def updatePhages(self, receptor:str, phageGenome:str, phageName:str):
-        """Updates set of infectable phages"""
-
-        if self.isVulnerable(receptor) and not self.isImmune(phageGenome):
-
-            self.phages.add(phageName)
-        
-        else: 
-
-            self.phages.remove(phageName)
-
-        return None
+    def isInfectable(self, phage:Phage):
+        """Can this phage infect this strain"""
+        return self.isVulnerable(phage.receptor.name) and not self.isImmune(phage.genome)
 
     def addReceptor(self, receptor:PhageReceptor.PhageReceptor):
         """Add a receptor to strain"""

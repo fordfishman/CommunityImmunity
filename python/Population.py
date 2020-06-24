@@ -72,7 +72,7 @@ class Population():
     Main timestep function
     """
 
-    def timestep(self, N:int, p:dict, pS:float):
+    def timestep(self, N:int, p:dict, pS:float, l:float):
         """
         N (int): total community size
         a (float): competition coefficient
@@ -98,13 +98,13 @@ class Population():
             
             phages = p[strainName] # the phages infecting this strain
             
-            absorbedPhages = 0
+            adsorbedPhages = 0
 
             for phage in phages.values():
 
-                absorbedPhages += phage.pop*phage.absp
+                adsorbedPhages += phage.pop*phage.adsp
 
-                n = self.__activeInfections(phage.absp, strain, phage)  # number of infections
+                n = self.__activeInfections(phage.adsp, strain, phage, l)  # number of infections
 
                 self.infected[phage.name] = n
 
@@ -113,7 +113,7 @@ class Population():
                 
                 newStrains += self.newSpacer(n,p=pS,strain=strain, phage=phage) 
 
-            strains[strainName].timestep(N=N,absP=absorbedPhages)
+            strains[strainName].timestep(N=N,adsP=adsorbedPhages, l=l)
             if strain.hasCost():
                 resSize += strains[strainName].pop
             else:
@@ -137,22 +137,22 @@ class Population():
     Other functions
     """
 
-    def vulnerableStrains(self, phageGenome:str, receptor:str):
+    # def vulnerableStrains(self, phageGenome:str, receptor:str):
 
-        # strains = deepcopy( self.strains )
-        strains = self.strains 
-        # vStrains = dict() # dictionary for storing vulnerable strains
-        vStrains = {strain for strain in strains.values() if strain.isVulnerable(receptor) and not strain.isImmune(phageGenome)} 
+    #     # strains = deepcopy( self.strains )
+    #     strains = self.strains 
+    #     # vStrains = dict() # dictionary for storing vulnerable strains
+    #     vStrains = {strain for strain in strains.values() if strain.isVulnerable(receptor) and not strain.isImmune(phageGenome)} 
 
-        """optimize when I add in event types"""
+    #     """optimize when I add in event types"""
 
-        # for strain in strains.values():
+    #     # for strain in strains.values():
 
-        #     if strain.isVulnerable(receptor) and not strain.isImmune(phageGenome):
+    #     #     if strain.isVulnerable(receptor) and not strain.isImmune(phageGenome):
 
-        #         vStrains.add(strain)
+    #     #         vStrains.add(strain)
 
-        return vStrains
+    #     return vStrains
 
 
 
@@ -257,11 +257,11 @@ class Population():
 
         return total
 
-    def __activeInfections(self, absP:float, strain:Strain, phage:Phage):
+    def __activeInfections(self, adsP:float, strain:Strain, phage:Phage,l:float):
         """
         Returns current number of infections due to this phage
         """
-        newInfections = strain.pop*absP*phage.pop
+        newInfections = strain.pop*adsP*phage.pop
         phageName = phage.name
         totalInfections = 0
         oldInfections = self.infected.get(phageName, 0)
@@ -271,7 +271,7 @@ class Population():
         #     totalInfections = newInfections
         # else:
         # oldInfections = self.__infected[phageName]
-        lysisEvents = 0.5*oldInfections
+        lysisEvents = l*oldInfections
         totalInfections = newInfections + oldInfections - lysisEvents
 
         return totalInfections
