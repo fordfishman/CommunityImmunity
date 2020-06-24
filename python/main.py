@@ -8,7 +8,7 @@ import numpy as np; import pandas as pd; import sys
 import argparse
 import Strain; import Population; import Community; import Phage; import PhageReceptor; import Crispr
 import general as gen
-import timeit; from progressbar import progressbar
+import timeit; from progressbar import progressbar; import multiprocessing as mp
 
 """
 Setting up arguments
@@ -303,7 +303,8 @@ def multi_sim(sims):
 
     # output name for run uses provided output name, number of sims, set parameters
 
-    output = "%s%ssims%s.csv" % (out, sims, "".join(constant_params)) 
+    # output = "%s%ssims%s.csv" % (out, sims, "".join(constant_params)) 
+    output = "%s/summary.csv" % (out) 
 
     timestep = [ community.timestep for community in communities ] # list of all timestep functions for all sims
     # print("initial sizes")
@@ -319,6 +320,7 @@ def multi_sim(sims):
     times_remaining = list()
     times_ratio = list()
 
+    # pool = mp.Pool(mp.cpu_count())
     
     for ind in progressbar(range( len(communities) )):
         t0 = timeit.default_timer()
@@ -368,11 +370,7 @@ def multi_sim(sims):
     print("Ratio:")
     print("max: %s\tmean: %s" % (max(times_ratio), stat.mean(times_ratio)))
 
-    # print("after sizes")
-    # for community in communities:
-    #     print(community.totalComSize)
 
-    # print(df)
     df.to_csv(output)
 
 

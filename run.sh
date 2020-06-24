@@ -2,8 +2,8 @@
 ## Ford Fishman
 
 # Set pathing
-# sourcepath=/Users/fordfishman/GitHub/CommunityImmunity
-sourcepath=/geode2/home/u030/ffishman/Carbonate/thindrives/fordfishman/GitHub/CommunityImmunity
+sourcepath=/Users/fordfishman/GitHub/CommunityImmunity
+# sourcepath=/geode2/home/u030/ffishman/Carbonate/thindrives/fordfishman/GitHub/CommunityImmunity
 python=$sourcepath/python
 r=$sourcepath/r
 # output=$sourcepath/output/latency_test/m105_pS106_aH_107_f1
@@ -14,7 +14,7 @@ output=$sourcepath/output/$settings
 rm -r $output
 mkdir $output
 
-sims=1000
+sims=30
 a=1e7
 l=0.9
 b=1.5
