@@ -122,15 +122,15 @@ mCoex_dir <- paste(output_dir, "m_Coex.png", sep="/")
 ggsave(plot = mCoex, filename = mCoex_dir, width = 7, height = 5)
 
 # absorbance
-abspxName <- "Absorption Rate (per host-phage interaction)"
+adspxName <- "Absorption Rate (per host-phage interaction)"
 
-abspDom <- dominancePlot(df, "absp", abspxName, xlog=T)
-abspDom_dir <- paste(output_dir, "absp_Dom.png",sep="/")
-ggsave(plot = abspDom, filename = abspDom_dir, width = 7, height = 5)
+adspDom <- dominancePlot(df, "adsp", adspxName, xlog=T)
+adspDom_dir <- paste(output_dir, "adsp_Dom.png",sep="/")
+ggsave(plot = adspDom, filename = adspDom_dir, width = 7, height = 5)
 
-abspCoex <- coexistencePlot(df, "absp", abspxName, xlog=T)
-abspCoex_dir <- paste(output_dir, "absp_Coex.png", sep="/")
-ggsave(plot = abspCoex, filename = abspCoex_dir, width = 7, height = 5)
+adspCoex <- coexistencePlot(df, "adsp", adspxName, xlog=T)
+adspCoex_dir <- paste(output_dir, "adsp_Coex.png", sep="/")
+ggsave(plot = adspCoex, filename = adspCoex_dir, width = 7, height = 5)
 
 # burst size
 betaxName <- "Burst Size (# of phage)"

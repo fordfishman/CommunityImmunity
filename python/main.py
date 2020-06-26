@@ -8,7 +8,8 @@ import numpy as np; import pandas as pd; import sys
 import argparse
 import Strain; import Population; import Community; import Phage; import PhageReceptor; import Crispr
 import general as gen
-import timeit; from progressbar import progressbar; import multiprocessing as mp
+import timeit; import multiprocessing as mp; from functools import partial
+from progressbar import progressbar
 
 """
 Setting up arguments
@@ -187,6 +188,29 @@ def main():
     # multi_sim(1000, m = 10**-7, pS=10**-5, beta=100,adsp=10**-8, d = 0.1, c=0)
     return None
 
+def sim_proc(community, timesteps):
+    pRichness = [len( community.phagesPopDict() )] # phage richness over time
+    maxPRich = pRichness[0]
+    sRichness = [len( community.strains )] # strain richness over time
+    maxSRich = sRichness[0]
+
+    for i in range(timesteps):
+        community.timestep(i)
+        pRichness.append( len( community.phagesPopDict() ) )
+        maxPRich = max(pRichness)
+        sRichness.append( community.richness() )
+        maxSRich = max(sRichness)
+
+    community.summary["richness"] = maxSRich
+    community.summary["phageRichness"] = maxPRich 
+    community.summary["pop"] = community.totalComSize
+    community.summary["phage"] = community.phagePopOverTime[-1]
+    community.summary["immune"] = community.imOverTime[-1]
+    community.summary["vulnerable"] = community.vulnOverTime[-1]
+
+    return community
+
+
 def one_sim():
 
     """
@@ -306,7 +330,7 @@ def multi_sim(sims):
     # output = "%s%ssims%s.csv" % (out, sims, "".join(constant_params)) 
     output = "%s/summary.csv" % (out) 
 
-    timestep = [ community.timestep for community in communities ] # list of all timestep functions for all sims
+    # timestep = [ community.timestep for community in communities ] # list of all timestep functions for all sims
     # print("initial sizes")
     # for community in communities:
     #     print(community.totalComSize)
@@ -315,63 +339,74 @@ def multi_sim(sims):
     )
     
     timesteps = 1000
-    times_com = list()
-    times_timestep = list()
-    times_remaining = list()
-    times_ratio = list()
+    # times_com = list()
+    # times_timestep = list()
+    # times_remaining = list()
+    # times_ratio = list()
 
-    # pool = mp.Pool(mp.cpu_count())
-    
-    for ind in progressbar(range( len(communities) )):
-        t0 = timeit.default_timer()
-        community = communities[ind]
-        pRichness = [len( community.phagesPopDict() )] # phage richness over time
-        maxPRich = pRichness[0]
-        sRichness = [len( community.strains )] # strain richness over time
-        maxSRich = sRichness[0]
+    map_proc = partial(sim_proc, timesteps=timesteps)
 
-        for i in range(timesteps):
-            time0 = timeit.default_timer()
-            timestep[ind](i)
-            time1=timeit.default_timer()
-            time2=timeit.default_timer()
-            pRichness.append( len( community.phagesPopDict() ) )
-            maxPRich = max(pRichness)
-            sRichness.append( community.richness() )
-            maxSRich = max(sRichness)
+    pool = mp.Pool(mp.cpu_count())
 
- 
-            time3=timeit.default_timer()
-            times_timestep.append(time1-time0)
-            times_remaining.append(time3-time2)
-            times_ratio.append(times_timestep[-1]/times_remaining[-1])
+    final_communities = pool.map(map_proc, communities, chunksize=1)
 
-        community.summary["richness"] = maxSRich
-        community.summary["phageRichness"] = maxPRich 
-        community.summary["pop"] = community.totalComSize
-        community.summary["phage"] = community.phagePopOverTime[-1]
-        community.summary["immune"] = community.imOverTime[-1]
-        community.summary["vulnerable"] = community.vulnOverTime[-1]
+    pool.close()
 
-        df.loc[ind] = df.columns.map( community.summary )
-        t1 = timeit.default_timer()
-        times_com.append(t1-t0)
-
-    import statistics as stat
-    print("Time per sim:")
-    print("max: %s\tmean: %s" % (max(times_com), stat.mean(times_com)))
-
-    print("Time per timestep:")
-    print("max: %s\tmean: %s" % (max(times_timestep), stat.mean(times_timestep)))
-
-    print("Time left:")
-    print("max: %s\tmean: %s" % (max(times_remaining), stat.mean(times_remaining)))
-
-    print("Ratio:")
-    print("max: %s\tmean: %s" % (max(times_ratio), stat.mean(times_ratio)))
-
+    for i,community in enumerate(final_communities):
+        df.loc[i] = df.columns.map( community.summary )
 
     df.to_csv(output)
+    
+    # for ind in progressbar(range( len(communities) )):
+    #     t0 = timeit.default_timer()
+    #     community = communities[ind]
+    #     pRichness = [len( community.phagesPopDict() )] # phage richness over time
+    #     maxPRich = pRichness[0]
+    #     sRichness = [len( community.strains )] # strain richness over time
+    #     maxSRich = sRichness[0]
+
+    #     for i in range(timesteps):
+    #         time0 = timeit.default_timer()
+    #         timestep[ind](i)
+    #         time1=timeit.default_timer()
+    #         time2=timeit.default_timer()
+    #         pRichness.append( len( community.phagesPopDict() ) )
+    #         maxPRich = max(pRichness)
+    #         sRichness.append( community.richness() )
+    #         maxSRich = max(sRichness)
+
+ 
+    #         time3=timeit.default_timer()
+    #         times_timestep.append(time1-time0)
+    #         times_remaining.append(time3-time2)
+    #         times_ratio.append(times_timestep[-1]/times_remaining[-1])
+
+    #     community.summary["richness"] = maxSRich
+    #     community.summary["phageRichness"] = maxPRich 
+    #     community.summary["pop"] = community.totalComSize
+    #     community.summary["phage"] = community.phagePopOverTime[-1]
+    #     community.summary["immune"] = community.imOverTime[-1]
+    #     community.summary["vulnerable"] = community.vulnOverTime[-1]
+
+    #     df.loc[ind] = df.columns.map( community.summary )
+    #     t1 = timeit.default_timer()
+    #     times_com.append(t1-t0)
+
+    # import statistics as stat
+    # print("Time per sim:")
+    # print("max: %s\tmean: %s" % (max(times_com), stat.mean(times_com)))
+
+    # print("Time per timestep:")
+    # print("max: %s\tmean: %s" % (max(times_timestep), stat.mean(times_timestep)))
+
+    # print("Time left:")
+    # print("max: %s\tmean: %s" % (max(times_remaining), stat.mean(times_remaining)))
+
+    # print("Ratio:")
+    # print("max: %s\tmean: %s" % (max(times_ratio), stat.mean(times_ratio)))
+
+
+    # df.to_csv(output)
 
 
     return None
