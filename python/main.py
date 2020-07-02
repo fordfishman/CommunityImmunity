@@ -348,6 +348,8 @@ def multi_sim(sims):
 
     pool = mp.Pool(mp.cpu_count())
 
+    print("%s Processors\n" % mp.cpu_count() )
+
     final_communities = pool.map(map_proc, communities, chunksize=1)
 
     pool.close()
