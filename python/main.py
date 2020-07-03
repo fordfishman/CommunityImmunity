@@ -15,7 +15,6 @@ from progressbar import progressbar
 Setting up arguments
 """
 parser = argparse.ArgumentParser()
-# parser.add_argument('-pS', default=None)
 parser.add_argument('-o','--output', default='comim', type=str, help="Desired name of output path")
 parser.add_argument('-t','--timesteps', default=1000, type=int, help="Number of timesteps in each simulation")
 parser.add_argument('-s','--single', default=False, type=bool, help='Whether or not to run the program in single simulation mode')
@@ -107,6 +106,8 @@ def initialize():
 
     crispr0 = Crispr.Crispr()
 
+    
+
     strain1 = Strain.Strain(
         name = "s1",
         a=a,b=b,c=c,y=y,
@@ -125,6 +126,8 @@ def initialize():
         genomeLength=1000
     )
 
+    # spacer = strain1.crispr.makeSpacer("AGTAGTAGTAGTAGTAGTAGTAGTAGTAGTAGTAGTAGTAGTAGTAGTAGT")
+    # strain1.crispr.addSpacer(spacer)
 
     # pop1 = Population.Population(
     #     name = "pop1",
@@ -194,12 +197,18 @@ def sim_proc(community, timesteps):
     sRichness = [len( community.strains )] # strain richness over time
     maxSRich = sRichness[0]
 
+    t0 = timeit.default_timer()
+    
     for i in range(timesteps):
         community.timestep(i)
         pRichness.append( len( community.phagesPopDict() ) )
         maxPRich = max(pRichness)
         sRichness.append( community.richness() )
         maxSRich = max(sRichness)
+        t1 = timeit.default_timer()
+
+        if (t1 - t0 ) > 5*60: # if the simulation takes longer than 5 min, end it
+            break
 
     community.summary["richness"] = maxSRich
     community.summary["phageRichness"] = maxPRich 
@@ -216,8 +225,8 @@ def one_sim():
     """
     Runs a single simulation with given parameters
     """
-    outputMain = out + "_main.csv"
-    outputRichness = out + "_richness.csv"
+    outputMain = out + "/main.csv"
+    outputRichness = out + "/richness.csv"
 
     community = initialize()
     
@@ -258,6 +267,24 @@ def one_sim():
 
         community.summary["richness"] = maxSRich
         community.summary["phageRichness"] = maxPRich 
+
+        # if i == 600 and community.totalComSize != 0:
+        #     s1 = community.strains["s1"]
+        #     spacer = s1.crispr.makeSpacer(community.phages["p1"].genome)
+        #     receptor = s1.phReceptors["r1"]
+        #     s2 = Strain.Strain(
+        #         name = "s2",
+        #         a=s1.a,b=s1.b,c=s1.c,y=y,
+        #         crispr = Crispr.Crispr(),
+        #         phReceptors = {
+        #             receptor.name:receptor
+        #             },
+        #         pop = 1
+        #     )
+
+        #     s2.crispr.addSpacer(spacer)
+
+        #     community.strains["s2"] = s2
 
     community.summary["pop"] = community.totalComSize
     community.summary["phage"] = community.phagePopOverTime[-1]
@@ -359,56 +386,6 @@ def multi_sim(sims):
 
     df.to_csv(output)
     
-    # for ind in progressbar(range( len(communities) )):
-    #     t0 = timeit.default_timer()
-    #     community = communities[ind]
-    #     pRichness = [len( community.phagesPopDict() )] # phage richness over time
-    #     maxPRich = pRichness[0]
-    #     sRichness = [len( community.strains )] # strain richness over time
-    #     maxSRich = sRichness[0]
-
-    #     for i in range(timesteps):
-    #         time0 = timeit.default_timer()
-    #         timestep[ind](i)
-    #         time1=timeit.default_timer()
-    #         time2=timeit.default_timer()
-    #         pRichness.append( len( community.phagesPopDict() ) )
-    #         maxPRich = max(pRichness)
-    #         sRichness.append( community.richness() )
-    #         maxSRich = max(sRichness)
-
- 
-    #         time3=timeit.default_timer()
-    #         times_timestep.append(time1-time0)
-    #         times_remaining.append(time3-time2)
-    #         times_ratio.append(times_timestep[-1]/times_remaining[-1])
-
-    #     community.summary["richness"] = maxSRich
-    #     community.summary["phageRichness"] = maxPRich 
-    #     community.summary["pop"] = community.totalComSize
-    #     community.summary["phage"] = community.phagePopOverTime[-1]
-    #     community.summary["immune"] = community.imOverTime[-1]
-    #     community.summary["vulnerable"] = community.vulnOverTime[-1]
-
-    #     df.loc[ind] = df.columns.map( community.summary )
-    #     t1 = timeit.default_timer()
-    #     times_com.append(t1-t0)
-
-    # import statistics as stat
-    # print("Time per sim:")
-    # print("max: %s\tmean: %s" % (max(times_com), stat.mean(times_com)))
-
-    # print("Time per timestep:")
-    # print("max: %s\tmean: %s" % (max(times_timestep), stat.mean(times_timestep)))
-
-    # print("Time left:")
-    # print("max: %s\tmean: %s" % (max(times_remaining), stat.mean(times_remaining)))
-
-    # print("Ratio:")
-    # print("max: %s\tmean: %s" % (max(times_ratio), stat.mean(times_ratio)))
-
-
-    # df.to_csv(output)
 
 
     return None

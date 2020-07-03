@@ -17,7 +17,7 @@ class Crispr():
     hasCost (bool) - does this unit have a current cost (can change scenarios with active cost)
     isActive (bool) - is the crispr system on or off
     """
-    def __init__(self, spacers:set=None, spacerLength:int = 20, isActive:bool=True):
+    def __init__(self, spacers:set=None, spacerLength:int = 30, isActive:bool=True):
         if not spacers is None:
             self.spacers = spacers
         else:

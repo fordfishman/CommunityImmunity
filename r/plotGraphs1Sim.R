@@ -20,8 +20,8 @@ if (is.null(opt$file)){
 }
 
 # the datafile
-path1 <- paste(opt$file, "_main",sep="")
-path2 <- paste(opt$file, "_richness",sep="")
+path1 <- paste(opt$file, "main",sep="")
+path2 <- paste(opt$file, "richness",sep="")
 
 dfile1 <- paste(path1, "csv", sep=".")
 dfile2 <- paste(path2, "csv", sep=".")

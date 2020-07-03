@@ -74,28 +74,6 @@ class Phage():
         self.newInfections = 0
         return None
 
-##########################################################################################################
-    
-    """
-    Attribute functions
-    """
-    # def genome(self):
-    #     return self.__genome
-
-    # def receptor(self):
-    #     return self.__receptor
-    
-    # def name(self):
-    #     return self.__name
-    
-    # def pop(self):
-    #     return(self.__pop)
-
-    # def fitness(self):
-    #     return(self.__fitness)
-
-    # def targetPop(self):
-    #     return(self.__targetPop)
 
 ##########################################################################################################
 
@@ -105,7 +83,7 @@ class Phage():
 
     @gen.dispatch_on_value
     def mutate(self, mutation) -> str:
-        pass # only runs if a mutation occurs that's not in thhe class
+        pass # only runs if a mutation occurs that's not in the class
         
 
     @mutate.register(Mutation.SNP)
