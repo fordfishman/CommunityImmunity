@@ -126,7 +126,7 @@ class Community():
 
         for phageName, phage in phages.items():
 
-            if phage.lysisEvents*phage.beta < 0.0001 and phage.pop < 1: # remove extinct phages from community
+            if phage.lysisEvents*phage.beta + phage.pop < 0.1: # remove extinct phages from community
                 extinctPhageNames.add(phageName)
                 continue
 
@@ -188,7 +188,7 @@ class Community():
             receptor=phage.receptor,
             genome=newGenome, 
             fitness = fitness,
-            pop = 100
+            pop = 1.0
         )
         
         return newPhage

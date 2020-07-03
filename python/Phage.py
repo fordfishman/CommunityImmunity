@@ -68,7 +68,7 @@ class Phage():
         # self.pop += l*beta*inf - adsp*Np*Ns - d*Np
         self.pop += beta*lysisEvents - newInf - d*Np
         # if beta*inf < 1 and self.pop < 1: self.pop = 0
-        if self.pop < 1: self.pop = 0
+        # if self.pop < 1: self.pop = 0
 
         self.lysisEvents = 0
         self.newInfections = 0
