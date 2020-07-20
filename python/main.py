@@ -153,7 +153,7 @@ def initialize():
             "pop":None,
             "phage":None,
             "immune":None,
-            "vulnerable":None,
+            "susceptible":None,
             "richness":None,
             "phageRichness":None,
             "pS":pS,
@@ -215,7 +215,7 @@ def sim_proc(community, timesteps):
     community.summary["pop"] = community.totalComSize
     community.summary["phage"] = community.phagePopOverTime[-1]
     community.summary["immune"] = community.imOverTime[-1]
-    community.summary["vulnerable"] = community.vulnOverTime[-1]
+    community.summary["susceptible"] = community.susOverTime[-1]
 
     return community
 
@@ -289,7 +289,7 @@ def one_sim():
     community.summary["pop"] = community.totalComSize
     community.summary["phage"] = community.phagePopOverTime[-1]
     community.summary["immune"] = community.imOverTime[-1]
-    community.summary["vulnerable"] = community.vulnOverTime[-1]
+    community.summary["susceptible"] = community.susOverTime[-1]
 
     print(community.summary)
 
@@ -321,11 +321,11 @@ def one_sim():
                 community.comSizeOverTime, 
                 community.phagePopOverTime,
                 community.imOverTime,
-                community.vulnOverTime, 
+                community.susOverTime, 
                 range(1,timesteps+1), 
                 ) 
             ),
-        columns= ['host','phage','immune','vulnerable','time'],
+        columns= ['host','phage','immune','susceptible','time'],
         )
     # cols = [ "strain"+str(i) for i in range(0,len(cRichness)) ]
     df2 = pd.DataFrame( 
@@ -362,7 +362,7 @@ def multi_sim(sims):
     # for community in communities:
     #     print(community.totalComSize)
     df = pd.DataFrame(None, 
-        columns=["pop","phage","immune","vulnerable","richness","phageRichness","pS", "b", "a", "c", "beta", "adsp", "d", "m", "l", "popinit", "phageinit"],
+        columns=["pop","phage","immune","susceptible","richness","phageRichness","pS", "b", "a", "c", "beta", "adsp", "d", "m", "l", "popinit", "phageinit"],
     )
     
     timesteps = 1000

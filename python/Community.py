@@ -26,7 +26,7 @@ class Community():
         self.comSizeOverTime = list()
         self.phagePopOverTime = list()
         self.imOverTime = list()
-        self.vulnOverTime = list()
+        self.susOverTime = list()
         self.__updateComSize()
         # self.__updateStrainPhageDF()
         self.strainTimes = list()
@@ -81,7 +81,7 @@ class Community():
         l = self.l
         N = self.totalComSize
         totalImmune = 0
-        totalVulnerable = 0
+        totalSusceptible = 0
         # infected = dict()
         newPhages = list()
         newStrains = list()
@@ -98,7 +98,7 @@ class Community():
             if strain.hasCost():
                 totalImmune += strains[strainName].pop
             else:
-                totalVulnerable += strains[strainName].pop
+                totalSusceptible += strains[strainName].pop
 
             for phageName,phage in phages.items():
                 # consider changing exinction parameters
@@ -146,7 +146,7 @@ class Community():
         self.__updateComSize()
 
         self.imOverTime.append(totalImmune)
-        self.vulnOverTime.append(totalVulnerable)
+        self.susOverTime.append(totalSusceptible)
 
         return None
 

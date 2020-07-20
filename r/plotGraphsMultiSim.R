@@ -29,17 +29,17 @@ df <- read.csv(file=filename, header = T, row.names = 1)
 df$initPopPhageRatio <- df$popinit/df$phageinit
 
 df$hostextinct <- df$pop == 0
-df$dominant <- with(df, ifelse(hostextinct, "Extinct Host",ifelse(vulnerable<=immune,"Immune","Vulnerable")) )
+df$dominant <- with(df, ifelse(hostextinct, "Extinct Host",ifelse(susceptible<=immune,"Immune","Susceptible")) )
 df$coexistence <- with(df, 
                         ifelse(hostextinct, "Extinct Host",
-                               ifelse(vulnerable>0 & immune>0 & phage >0,"Full Coexistence",
-                                      ifelse(vulnerable >0 & immune>0,"Host Coexistence",
-                                             ifelse(vulnerable >0 & phage>0,"Vulnerable + Phage",
+                               ifelse(susceptible>0 & immune>0 & phage >0,"Full Coexistence",
+                                      ifelse(susceptible >0 & immune>0,"Host Coexistence",
+                                             ifelse(susceptible >0 & phage>0,"Susceptible + Phage",
                                                     ifelse(immune>0 & phage>0,"Immune + Phage",
-                                                           ifelse(immune>0,"Immune","Vulnerable")))))) )
+                                                           ifelse(immune>0,"Immune","Susceptible")))))) )
 
 # organize histogram stack
-df$coexistence <- factor(df$coexistence, levels = c("Extinct Host","Full Coexistence", "Host Coexistence","Immune + Phage","Immune","Vulnerable + Phage","Vulnerable"))
+df$coexistence <- factor(df$coexistence, levels = c("Extinct Host","Full Coexistence", "Host Coexistence","Immune + Phage","Immune","Susceptible + Phage","Susceptible"))
 
 # plotting functions
 
@@ -53,7 +53,7 @@ dominancePlot <- function(df, col, xname=NULL, xlog=F, bins=40){
   p <- ggplot(data=df, aes(x=x, fill=dominant)) +
     geom_histogram(position = "fill",bins=bins,color="black", size = 0.2) +
     scale_y_continuous("Proportion",expand=c(0,0)) +
-    scale_fill_manual("", limits = c("Extinct Host","Immune","Vulnerable"),values = c("#666666","palegreen","steelblue2"),drop = F )+
+    scale_fill_manual("", limits = c("Extinct Host","Immune","Susceptible"),values = c("#666666","palegreen","steelblue2"),drop = F )+
     theme(panel.grid.major = element_blank(), 
           panel.grid.minor = element_blank(),
           panel.background = element_blank(),

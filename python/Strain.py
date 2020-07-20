@@ -87,8 +87,8 @@ class Strain():
         return None
         
 
-    def isVulnerable(self, receptor:str): 
-        """Does this strain have the phage receptor to be vulnerable to this phage"""
+    def isSusceptible(self, receptor:str): 
+        """Does this strain have the phage receptor to be susceptible to this phage"""
         # if the receptor is in strain and is expressed
         return receptor in self.phReceptors and self.phReceptors[receptor].isExpressed  
 
@@ -101,7 +101,7 @@ class Strain():
 
     def isInfectable(self, phage:Phage):
         """Can this phage infect this strain"""
-        return self.isVulnerable(phage.receptor.name) and not self.isImmune(phage.genome)
+        return self.isSusceptible(phage.receptor.name) and not self.isImmune(phage.genome)
 
     def addReceptor(self, receptor:PhageReceptor.PhageReceptor):
         """Add a receptor to strain"""
@@ -125,6 +125,8 @@ class Strain():
             cost = self.crispr.hasCost
 
         return cost
+
+    
     # def changeReceptorActivity(self, receptorName:str, active:bool):
 
     #     phReceptors = self.__phReceptors
@@ -145,11 +147,6 @@ class Strain():
     #     finally:
     #         return None
     
-##########################################################################################################
-
-    """
-    Private methods
-    """
 
     
         
