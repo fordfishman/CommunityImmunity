@@ -3,6 +3,7 @@
 """
 Modules
 """
+# need to see if spacers are actually getting added or are just replacing old spacer set
 
 import numpy as np; import pandas as pd; import sys
 import argparse
@@ -16,7 +17,7 @@ Setting up arguments
 """
 parser = argparse.ArgumentParser()
 parser.add_argument('-o','--output', default='comim', type=str, help="Desired name of output path")
-parser.add_argument('-t','--timesteps', default=1000, type=int, help="Number of timesteps in each simulation")
+parser.add_argument('-t','--timesteps', default=2000, type=int, help="Number of timesteps in each simulation")
 parser.add_argument('-s','--single', default=False, type=bool, help='Whether or not to run the program in single simulation mode')
 parser.add_argument('-S','--sims', default=100, type=int, help="Number of simulations to run (--single must be False)")
 parser.add_argument('-pS', default=None, type=float, help="probability of spacer formation per infection")
@@ -198,16 +199,18 @@ def sim_proc(community, timesteps):
     maxSRich = sRichness[0]
 
     t0 = timeit.default_timer()
+
+    timestep = community.timestep
     
     for i in range(timesteps):
-        community.timestep(i)
+        timestep(i)
         pRichness.append( len( community.phagesPopDict() ) )
         maxPRich = max(pRichness)
         sRichness.append( community.richness() )
         maxSRich = max(sRichness)
         t1 = timeit.default_timer()
 
-        if (t1 - t0 ) > 5*60: # if the simulation takes longer than 5 min, end it
+        if (t1 - t0 ) > 10*60: # if the simulation takes longer than 5 min, end it
             break
 
     community.summary["richness"] = maxSRich
@@ -315,19 +318,20 @@ def one_sim():
     # print("max: %s\tmean: %s" % (max(community.otherTimes), stat.mean(community.otherTimes)))
     # print()
     # print("max immune: %s"%(max(community.imOverTime)))
-    df1 = pd.DataFrame( 
-        list( 
-            zip(
-                community.comSizeOverTime, 
-                community.phagePopOverTime,
-                community.imOverTime,
-                community.susOverTime, 
-                range(1,timesteps+1), 
-                ) 
-            ),
-        columns= ['host','phage','immune','susceptible','time'],
-        )
-    # cols = [ "strain"+str(i) for i in range(0,len(cRichness)) ]
+    # df1 = pd.DataFrame( 
+    #     list( 
+    #         zip(
+    #             community.comSizeOverTime, 
+    #             community.phagePopOverTime,
+    #             community.imOverTime,
+    #             community.susOverTime, 
+    #             range(1,timesteps+1), 
+    #             ) 
+    #         ),
+    #     columns= ['host','phage','immune','susceptible','time'],
+    #     )
+    df1 = community.fullRecord()
+    # # cols = [ "strain"+str(i) for i in range(0,len(cRichness)) ]
     df2 = pd.DataFrame( 
         list( 
             zip(

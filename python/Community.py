@@ -28,11 +28,11 @@ class Community():
         self.imOverTime = list()
         self.susOverTime = list()
         self.__updateComSize()
-        # self.__updateStrainPhageDF()
         self.strainTimes = list()
         self.phageTimes = list()
         self.dfTimes = list()
         self.otherTimes = list()
+        self.record = gen.initRecord()
 
 ##########################################################################################################
 
@@ -51,7 +51,20 @@ class Community():
 
         return [ pop.spacerRichness() for pop in pops ] 
 
+    def fullRecord(self):
+        """Record of all strain and phage data from the beginning to the current step"""
+        record = self.record
+        # append = record.append
 
+        for phage in self.phages.values():
+            
+            record = record.append( phage.record, ignore_index = True)  
+
+        for strain in self.strains.values():
+
+            record = record.append( strain.record, ignore_index = True )  
+        
+        return record
 
 
 
@@ -60,7 +73,7 @@ class Community():
     """
     Main timestep function
     """
-    def timestep(self, step:int):
+    def timestep(self, step:int, maxtimestep=1000):
         """
         N (int): total community size
         a (float): competition coefficient
@@ -82,12 +95,10 @@ class Community():
         N = self.totalComSize
         totalImmune = 0
         totalSusceptible = 0
-        # infected = dict()
         newPhages = list()
         newStrains = list()
         extinctPhageNames = set()
         extinctStrainNames = set()
-
 
         for strainName, strain in strains.items():
 
@@ -101,10 +112,8 @@ class Community():
                 totalSusceptible += strains[strainName].pop
 
             for phageName,phage in phages.items():
-                # consider changing exinction parameters
 
                 if strain.isInfectable(phage): # can phage infect this host?
-                    # newInfections = np.random.binomial(n=phage.pop*strain.pop,p=phage.adsp)
                     newInfections = phage.pop*phage.adsp*strain.pop
 
                 else:
@@ -122,7 +131,7 @@ class Community():
                 newPhages += self.phageMutation(newVirions, p=m, phage=deepcopy(phage))
                 newStrains += self.newSpacer(newInfections,p=pS, strain=deepcopy(strain), phage=phage)
 
-            strains[strainName].timestep(N=N,l=l)
+            strains[strainName].timestep(N=N,l=l,step=step)
 
         for phageName, phage in phages.items():
 
@@ -130,7 +139,7 @@ class Community():
                 extinctPhageNames.add(phageName)
                 continue
 
-            phages[phageName].timestep()
+            phages[phageName].timestep(step)
 
         newPhages_dict = {phage.name:phage for phage in newPhages}
 
@@ -139,7 +148,19 @@ class Community():
         newStrains_dict = {newStrain.name:newStrain for newStrain in newStrains}
         strains.update(newStrains_dict)
         finalStrains = {strainName:strain for strainName,strain in strains.items() if not strainName in extinctStrainNames}
+        
+        # Add records of extinct members to master record
+    
+        # append = self.record.append
+
+        for phageName in extinctPhageNames:
             
+            self.record = self.record.append( self.phages[phageName].record, ignore_index = True )  
+
+        for strainName in extinctStrainNames:
+
+            self.record = self.record.append( self.strains[strainName].record, ignore_index = True )  
+
         self.phages = finalPhages
         self.strains = finalStrains    
         

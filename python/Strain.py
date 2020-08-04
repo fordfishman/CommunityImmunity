@@ -2,6 +2,7 @@
 
 import Spacer; import Crispr; import PhageReceptor
 from Phage import Phage
+import general as gen
 import Error as er
 
 ##########################################################################################################
@@ -31,6 +32,8 @@ class Strain():
         self.b = b
         self.c = c
         self.y = y
+
+        self.record = gen.initRecord()
         
         if not phReceptors is None:
             for receptorName in phReceptors: # for all receptors in a strain
@@ -42,15 +45,14 @@ class Strain():
     """
     Main timestep function
     """
-    def timestep(self, N:int, l:float):
+    def timestep(self, N:int, l:float, step:int):
         """
         N (int): total host density
-        a (float): competition coefficient
-        b (float): intrinsic growth rate
-        c (float): cost of crispr
-        y (float):
-        l (float):
+        l (float): probability an infection lyses
+        step (int): current timestep
         """
+
+        i = len(self.record) # how long this strain has been around
 
         a = self.a
         b = self.b
@@ -59,8 +61,12 @@ class Strain():
         currentInfections = sum(self.infections.values())
         self.ipop = currentInfections
 
+        strainType = 'novel'
+
         if not self.hasCost(): # set cost to 0 if strain does not have CRISPR-associated cost
             c = 0
+        if self.name == 's1':
+            strainType = 'initial'
         
         # fitness 
         # r = b * ( self.intrinsicFitness - c ) - currentInfections # Beverton-Holt Model
@@ -68,10 +74,18 @@ class Strain():
         # self.ipop += currentInfections - l * self.ipop # infected pop 
             
         # reproduce
-        self.pop = ( r*self.pop - currentInfections)/( 1 + ( N/a )**y ) 
+        Nh = self.pop
 
-        if self.pop < 1: self.pop = 0
-        if self.ipop < 1: self.ipop = 0
+        self.pop = ( r*Nh - currentInfections)/( 1 + ( N/a )**y ) 
+
+        if self.pop < 0.1: self.pop = 0
+        if self.ipop < 0.1: self.ipop = 0
+
+        if not self.crispr is None:
+            spacers = len(self.crispr)
+
+        self.record.loc[i] = [step, self.name, self.pop, self.pop-Nh, (self.pop-Nh)/Nh, strainType, spacers]
+
 
         return None
 

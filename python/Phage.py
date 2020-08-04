@@ -1,6 +1,6 @@
 ## Ford Fishman
 
-import numpy as np
+import numpy as np; import pandas as pd
 import PhageReceptor; import Population
 from Enums import Mutation
 import general as gen
@@ -29,12 +29,15 @@ class Phage():
         self.fitness = fitness
         # self.__strains = set()
         # self.__targetPop = targetPop
+        self.record = None
 
         self.adsp = adsp
         self.beta = beta
         self.d = d
         self.newInfections = 0
         self.lysisEvents = 0
+
+        self.record = gen.initRecord()
 
         if not genome is None: 
             self.genome = genome
@@ -49,13 +52,12 @@ class Phage():
     Main timestep function
     """
 
-    def timestep(self):
+    def timestep(self, step:int):
         """
-        Ns (float): number of susceptible hosts
-        inf:
-        l:
+        step (int): current timestep
         """
 
+        i = len(self.record) # how long this phage has been around
         # adsp = self.adsp
         beta = self.beta
         d = self.d
@@ -69,6 +71,8 @@ class Phage():
         self.pop += beta*lysisEvents - newInf - d*Np
         # if beta*inf < 1 and self.pop < 1: self.pop = 0
         # if self.pop < 1: self.pop = 0
+
+        self.record.loc[i] = [step, self.name, self.pop, self.pop-Np, (self.pop-Np)/Np,"phage", None]
 
         self.lysisEvents = 0
         self.newInfections = 0

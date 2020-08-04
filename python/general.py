@@ -5,13 +5,7 @@ Functions and classes used across classes
 """
 from Enums import Type, Mutation
 import numpy as np
-
-
-# def switch(type:Type):
-#     """
-#     """
-#     return type.name
-
+import pandas as pd
 
 def generateName(type:Type):
     """Make names for different objects of different classes"""
@@ -22,6 +16,13 @@ def generateName(type:Type):
     name = "%s%s" % (type.value,nameEnd)
     return name
 
+def initRecord():
+    """
+    returns a dataframe that records information to this phage population
+    """
+    record = pd.DataFrame(None, columns=["timestep", "name", "pop", "dpop", "dpop_pop","type", "spacers"])
+    
+    return record
 
 def dispatch_on_value(func):
     """
@@ -131,6 +132,14 @@ import pandas as pd
 df = pd.DataFrame(None, columns=("a","b","c"))
 df.loc[0] = df.columns.map(pd.Series({"a":1,"b":3,"c":3}))
 df.loc[1] = df.columns.map(pd.Series({"b":29,"a":3,"c":3}))
+
+# print(df)
+
+# df2 = pd.DataFrame(None, columns=("a","b","c"))
+# df2.loc[0] = df.columns.map(pd.Series({"a":1,"b":3,"c":3}))
+
+# df2 = df2.append(df, ignore_index = True )
+# print(df2)
 # df1 = df.apply(lambda col:func(col),axis=0)
 # print(df)
 # import argparse
@@ -144,3 +153,8 @@ df.loc[1] = df.columns.map(pd.Series({"b":29,"a":3,"c":3}))
 
 # arg = parser.parse_args(["-pS","2"])
 # print(arg.pS)
+
+# a = initRecord()
+
+# a.loc[0] = [1, 'name', 1,2,"N"]
+# print(a)
