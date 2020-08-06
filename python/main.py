@@ -211,7 +211,7 @@ def sim_proc(community, timesteps):
         maxSRich = max(sRichness)
         t1 = timeit.default_timer()
 
-        if (t1 - t0 ) > 10*60: # if the simulation takes longer than 5 min, end it
+        if (t1 - t0 ) > 30*60: # if the simulation takes longer than 5 min, end it
             break
 
     community.summary["richness"] = maxSRich
