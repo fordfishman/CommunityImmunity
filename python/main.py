@@ -25,6 +25,7 @@ parser.add_argument('-m', default=None, type=float, help="phage mutation rate pe
 parser.add_argument('-b', default=None, type=float, help="host per capita growth rate")
 parser.add_argument('-a', default=None, type=float, help="region where density dependence sets in for hosts")
 parser.add_argument('-c', default=None, type=float, help="cost of CRISPR")
+parser.add_argument('-f', default=None, type=float, help="CRISPR failure rate")
 parser.add_argument('--adsp', default=None, type=float, help="adsorption rate of phage")
 parser.add_argument('--beta', default=None, type=int, help="burst size of phage")
 parser.add_argument('-d', default=None, type=float, help="phage decay rate per timestep")
@@ -42,6 +43,7 @@ m = arguments.m
 b = arguments.b
 a = arguments.a
 c = arguments.c
+f = arguments.f
 adsp = arguments.adsp
 beta = arguments.beta
 d = arguments.d
@@ -80,7 +82,7 @@ def initialize():
     Return: com (Community)
     """
     from numpy.random import uniform as uni, randint
-    params = {"pS", "b", "a", "c", "beta", "adsp", "d", "m", "l", "popinit", "phageinit"}
+    params = {"pS", "b", "a", "c", "f","beta", "adsp", "d", "m", "l", "popinit", "phageinit"}
     param_dict = dict() # will contain parameters already specified at the command line
     
     for arg,val in globals().items():
@@ -91,8 +93,9 @@ def initialize():
     # if parameters aren't specified, draw them from distributions
     pS = param_dict.get( "pS", 10**-( uni(6,9) ) ) # default: random float 10^-5 - 10^-9
     b = param_dict.get( "b", uni(0.9, 2) )
-    a = param_dict.get("a", 10**( uni(5,8) ) )
+    a = param_dict.get( "a", 10**( uni(5,8) ) )
     c = param_dict.get( "c", 10**-( uni(1,3) ) )
+    f = param_dict.get( "f", 10**-( uni(5,7) ) )
     
     beta = param_dict.get( "beta", randint(50,200) ) # default: random int from 1-200
     adsp = param_dict.get( "adsp", 10**-( uni(7,9) ) )
@@ -107,11 +110,10 @@ def initialize():
 
     crispr0 = Crispr.Crispr()
 
-    
 
     strain1 = Strain.Strain(
         name = "s1",
-        a=a,b=b,c=c,y=y,
+        a=a,b=b,c=c,y=y,f=f,
         crispr = crispr0,
         phReceptors = {
             receptor1.name:receptor1
@@ -137,8 +139,6 @@ def initialize():
     #     } 
     # )
 
-
-
     com = Community.Community(
         pS=pS,m=m,l=l,
         strains = {
@@ -160,7 +160,8 @@ def initialize():
             "pS":pS,
             "b":b,
             "a":a, 
-            "c":c, 
+            "c":c,
+            "f":f, 
             "beta":beta, 
             "adsp":adsp, 
             "d":d, 
@@ -238,6 +239,7 @@ def one_sim():
     print("b:\t%s"%community.strains["s1"].b)
     print("a:\t%s"%community.strains["s1"].a)
     print("c:\t%s"%community.strains["s1"].c)
+    print("f:\t%s"%community.strains["s1"].f)
     print("beta:\t%s"%community.phages["p1"].beta)
     print("adsp:\t%s"%community.phages["p1"].adsp)
     print("d:\t%s"%community.phages["p1"].d)
@@ -351,8 +353,8 @@ def one_sim():
 
 def multi_sim(sims):
 
-    params = {"pS", "b", "a", "c", "beta", "adsp", "d", "m", "l", "popinit", "phageinit"}
-    constant_params = sorted(["_%s%s" % (param,globals()[param]) for param in params if not globals()[param] is None]) 
+    params = {"pS", "b", "a", "c", "f","beta", "adsp", "d", "m", "l", "popinit", "phageinit"}
+    # constant_params = sorted(["_%s%s" % (param,globals()[param]) for param in params if not globals()[param] is None]) 
 
     communities = [ initialize() for i in range(sims) ]
 
@@ -366,7 +368,7 @@ def multi_sim(sims):
     # for community in communities:
     #     print(community.totalComSize)
     df = pd.DataFrame(None, 
-        columns=["pop","phage","immune","susceptible","richness","phageRichness","pS", "b", "a", "c", "beta", "adsp", "d", "m", "l", "popinit", "phageinit"],
+        columns=["pop","phage","immune","susceptible","richness","phageRichness","pS", "b", "a", "c", "f","beta", "adsp", "d", "m", "l", "popinit", "phageinit"],
     )
     
     timesteps = 1000

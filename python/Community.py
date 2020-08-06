@@ -117,8 +117,7 @@ class Community():
                     newInfections = phage.pop*phage.adsp*strain.pop
 
                 else:
-                    newInfections = 0
-                    # newInfections = np.random.binomial(n=phage.pop*strain.pop,p=1e-5*phage.adsp)
+                    newInfections = phage.pop*phage.adsp*strain.pop*strain.f
 
                 currentInfections = strain.infections.get(phageName, 0)
                 phage.newInfections += newInfections # phage keeps track of its infections
@@ -225,7 +224,8 @@ class Community():
         
         a = strain.a
         b = strain.b 
-        c = strain.c 
+        c = strain.c
+        f = strain.f 
         y = strain.y
 
         crispr = Crispr( oldSpacers ) 
@@ -237,10 +237,7 @@ class Community():
 
         newStrain = Strain( # organism with new spacer is a new strain, one starting cell
             name=newName,
-            a=a,
-            b=b,
-            c=c,
-            y=y,
+            a=a, b=b, c=c, f=f, y=y,
             crispr=crispr,
             phReceptors=strain.phReceptors,
             pop = 1.0

@@ -10,15 +10,17 @@ import Error as er
 class Strain():
 
     """
-    name (str)
-    crispr (Crispr)
-    phReceptors (dict)
+    name (str): tag for this strain
+    a (float): competition coefficient (hosts)
+    b (float): birth rate (hosts/timestep)
+    c (float): cost of CRISPR [0,1]
+    f (float): failure rate of CRISPR immunity
+    crispr (Crispr): CRISPR locus, if none is present, keep as None
+    phReceptors (dict): dictionary of this strains phage receptors
     activeReceptors (dict)
     pop (float)
-    intrinsicFitness (float)
-    phages (set(str)): names of phages this strain can be infected by
     """
-    def __init__(self, name:str, a:float, b:float, c:float, y:float, crispr:Crispr= None,phReceptors:dict = None, pop:float = 1):
+    def __init__(self, name:str, a:float, b:float, c:float, f:float,y:float, crispr:Crispr= None,phReceptors:dict = None, pop:float = 1):
         self.name = name
         self.crispr = crispr
         self.phReceptors = phReceptors
@@ -32,6 +34,7 @@ class Strain():
         self.b = b
         self.c = c
         self.y = y
+        self.f = f
 
         self.record = gen.initRecord()
         
@@ -58,9 +61,12 @@ class Strain():
         b = self.b
         c = self.c 
         y = self.y
+        Nh = self.pop
+
         currentInfections = sum(self.infections.values())
         self.ipop = currentInfections
 
+        # labeling system for record
         strainType = 'novel'
 
         if not self.hasCost(): # set cost to 0 if strain does not have CRISPR-associated cost
@@ -69,17 +75,16 @@ class Strain():
             strainType = 'initial'
         
         # fitness 
-        # r = b * ( self.intrinsicFitness - c ) - currentInfections # Beverton-Holt Model
         r = b * ( self.intrinsicFitness - c )
         # self.ipop += currentInfections - l * self.ipop # infected pop 
-            
-        # reproduce
-        Nh = self.pop
-
-        self.pop = ( r*Nh - currentInfections)/( 1 + ( N/a )**y ) 
-
-        if self.pop < 0.1: self.pop = 0
-        if self.ipop < 0.1: self.ipop = 0
+        
+        # self.pop = ( r*Nh - currentInfections)/( 1 + ( N/a )**y ) 
+        # based upon Beverton-Holt model
+        self.pop = ( r*Nh )/( 1 + ( N/a )**y ) - currentInfections
+        # Extinction threshold
+        if self.pop+self.ipop < 0.1: 
+            self.pop = 0
+            self.ipop = 0
 
         if not self.crispr is None:
             spacers = len(self.crispr)

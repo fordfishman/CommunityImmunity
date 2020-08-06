@@ -30,6 +30,7 @@ class Phage():
         # self.__strains = set()
         # self.__targetPop = targetPop
         self.record = None
+        self.type = 'phage'
 
         self.adsp = adsp
         self.beta = beta
@@ -71,8 +72,10 @@ class Phage():
         self.pop += beta*lysisEvents - newInf - d*Np
         # if beta*inf < 1 and self.pop < 1: self.pop = 0
         # if self.pop < 1: self.pop = 0
-
-        self.record.loc[i] = [step, self.name, self.pop, self.pop-Np, (self.pop-Np)/Np,"phage", None]
+        
+        # record data from this timestep
+        # columns: "timestep", "name", "pop", "dpop", "dpop_pop","type", "spacers"
+        self.record.loc[i] = [step, self.name, self.pop, self.pop-Np, (self.pop-Np)/Np, self.type, None]
 
         self.lysisEvents = 0
         self.newInfections = 0
