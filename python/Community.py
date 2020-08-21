@@ -122,21 +122,28 @@ class Community():
                 currentInfections = strain.infections.get(phageName, 0)
                 phage.newInfections += newInfections # phage keeps track of its infections
                 lysisEvents = currentInfections * l # how many infections are now lysing?
-                # lysisEvents = np.random.binomial(n=currentInfections,p=l) # how many infections are now lysing?
+                # lysisEvents = np.random.binomial(n=currentInfections,p=l) 
                 phage.lysisEvents += lysisEvents
                 newVirions = lysisEvents*phage.beta
                 strain.infections[phageName] = currentInfections + newInfections - lysisEvents
 
                 newPhages += self.phageMutation(newVirions, p=m, phage=deepcopy(phage))
-                newStrains += self.newSpacer(newInfections,p=pS, strain=deepcopy(strain), phage=phage)
+
+                if not strain.crispr is None: # if the strain has a crispr locus
+                    newStrains += self.newSpacer(newInfections,p=pS, strain=deepcopy(strain), phage=phage)
 
             strains[strainName].timestep(N=N,l=l,step=step)
 
         for phageName, phage in phages.items():
+            proxyPop = phage.lysisEvents*phage.beta + phage.pop
+            if proxyPop < 1: # remove extinct phages from community
+                n = np.random.uniform()
 
-            if phage.lysisEvents*phage.beta + phage.pop < 0.1: # remove extinct phages from community
-                extinctPhageNames.add(phageName)
-                continue
+                if n<0.01 or proxyPop<0.1: extinctPhageNames.add(phageName)
+
+            # if proxyPop < 0.8: # remove extinct phages from community
+            #     extinctPhageNames.add(phageName)
+            #     continue
 
             phages[phageName].timestep(step)
 

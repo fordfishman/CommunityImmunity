@@ -121,6 +121,16 @@ def initialize():
         pop = popinit
     )
 
+    # strain2 = Strain.Strain(
+    #     name = "s2",
+    #     a=a,b=b,c=c,y=y,f=f,
+    #     crispr = crispr0,
+    #     phReceptors = {
+    #         receptor1.name:receptor1
+    #         },
+    #     pop = popinit/100
+    # )
+
     phage1 = Phage.Phage(
         name = "p1",
         adsp = adsp,beta = beta, d = d,
@@ -129,8 +139,10 @@ def initialize():
         genomeLength=1000
     )
 
-    # spacer = strain1.crispr.makeSpacer("AGTAGTAGTAGTAGTAGTAGTAGTAGTAGTAGTAGTAGTAGTAGTAGTAGT")
-    # strain1.crispr.addSpacer(spacer)
+    # spacer = strain2.crispr.makeSpacer("AGTAGTAGTAGTAGTAGTAGTAGTAGTAGTAGTAGTAGTAGTAGTAGTAGT")
+    # spacer = strain2.crispr.makeSpacer(phage1.genome)
+
+    # strain2.crispr.addSpacer(spacer)
 
     # pop1 = Population.Population(
     #     name = "pop1",
@@ -142,7 +154,8 @@ def initialize():
     com = Community.Community(
         pS=pS,m=m,l=l,
         strains = {
-            strain1.name: strain1
+            strain1.name: strain1,
+            # strain2.name: strain2
         },
         phages = {
             phage1.name: phage1
@@ -240,16 +253,14 @@ def one_sim():
     print("a:\t%s"%community.strains["s1"].a)
     print("c:\t%s"%community.strains["s1"].c)
     print("f:\t%s"%community.strains["s1"].f)
-    print("beta:\t%s"%community.phages["p1"].beta)
-    print("adsp:\t%s"%community.phages["p1"].adsp)
-    print("d:\t%s"%community.phages["p1"].d)
+    print("beta:\t%s"%beta)
+    print("adsp:\t%s"%adsp)
+    print("d:\t%s"%d)
     print("m:\t%s"%community.m)
     print("l:\t%s"%community.l)
     print()
     print("popint:\t%s"%community.totalComSize)
     print("phageinit:\t%s"%community.phagePopOverTime[0])
-
-
 
 
     N = community.totalComSize # community size
@@ -273,20 +284,21 @@ def one_sim():
         community.summary["richness"] = maxSRich
         community.summary["phageRichness"] = maxPRich 
 
-        # if i == 600 and community.totalComSize != 0:
+        # if i == 50 and community.totalComSize != 0:
         #     s1 = community.strains["s1"]
-        #     spacer = s1.crispr.makeSpacer(community.phages["p1"].genome)
+        #     crispr0 = Crispr.Crispr()
+
         #     receptor = s1.phReceptors["r1"]
         #     s2 = Strain.Strain(
         #         name = "s2",
-        #         a=s1.a,b=s1.b,c=s1.c,y=y,
-        #         crispr = Crispr.Crispr(),
+        #         a=s1.a,b=s1.b,c=s1.c,y=y,f=f,
+        #         crispr = crispr0,
         #         phReceptors = {
         #             receptor.name:receptor
         #             },
-        #         pop = 1
+        #         pop = 1e0
         #     )
-
+        #     spacer = s2.crispr.makeSpacer(community.phages["p1"].genome)
         #     s2.crispr.addSpacer(spacer)
 
         #     community.strains["s2"] = s2

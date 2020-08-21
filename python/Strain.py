@@ -75,7 +75,7 @@ class Strain():
             strainType = 'initial'
         
         # fitness 
-        r = b * ( self.intrinsicFitness - c )
+        r = b * ( 1 - c )
         # self.ipop += currentInfections - l * self.ipop # infected pop 
         
         # self.pop = ( r*Nh - currentInfections)/( 1 + ( N/a )**y ) 
@@ -88,6 +88,8 @@ class Strain():
 
         if not self.crispr is None:
             spacers = len(self.crispr)
+        else:
+            spacers = None 
 
         self.record.loc[i] = [step, self.name, self.pop, self.pop-Nh, (self.pop-Nh)/Nh, strainType, spacers]
 
@@ -114,9 +116,15 @@ class Strain():
 
     def isImmune(self, phageGenome:str):
         """Does the strain have CRISPR resistance"""
-        crispr = self.crispr
-        
-        return crispr.hasSpacer( genome = phageGenome )
+        isImmune = False
+
+        if self.crispr is None:
+            isImmune = False
+        else:
+
+            isImmune = self.crispr.hasSpacer( genome = phageGenome )
+
+        return isImmune
 
     def isInfectable(self, phage:Phage):
         """Can this phage infect this strain"""
