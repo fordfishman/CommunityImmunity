@@ -129,10 +129,13 @@ class Community():
                     newInfections = phage.pop*phage.adsp*strain.pop
 
                 else:
+                    # new infections due to CRISPR failure rate
                     newInfections = phage.pop*phage.adsp*strain.pop*strain.f
+                    # failed infections remove phage from system
+                    failedInfections = phage.pop*phage.adsp*strain.pop*(1-strain.f)
 
                 currentInfections = strain.infections.get(phageName, 0)
-                phage.newInfections += newInfections # phage keeps track of its infections
+                phage.adsorbed += newInfections + failedInfections # phage keeps tracked of adsorbed members
                 lysisEvents = currentInfections * l # how many infections are now lysing?
                 # lysisEvents = np.random.binomial(n=currentInfections,p=l) 
                 phage.lysisEvents += lysisEvents

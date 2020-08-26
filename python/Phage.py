@@ -35,7 +35,7 @@ class Phage():
         self.adsp = adsp
         self.beta = beta
         self.d = d
-        self.newInfections = 0
+        self.adsorbed = 0
         self.lysisEvents = 0
 
         self.record = gen.initRecord()
@@ -64,12 +64,12 @@ class Phage():
         d = self.d
 
         Np = self.pop # phage pop
-        newInf = self.newInfections
+        adsorbed = self.adsorbed
         lysisEvents = self.lysisEvents
         
         # self.__pop += adsp*(beta-1)*Ns*Np*self.__fitness - d*Np
         # self.pop += l*beta*inf - adsp*Np*Ns - d*Np
-        self.pop += beta*lysisEvents - newInf - d*Np
+        self.pop += beta*lysisEvents - adsorbed - d*Np
         # if beta*inf < 1 and self.pop < 1: self.pop = 0
         # if self.pop < 1: self.pop = 0
         
@@ -78,7 +78,7 @@ class Phage():
         self.record.loc[i] = [step, self.name, self.pop, self.pop-Np, (self.pop-Np)/Np, self.type, None]
 
         self.lysisEvents = 0
-        self.newInfections = 0
+        self.adsorbed = 0
         return None
 
 
