@@ -5,22 +5,24 @@ Functions and classes used across classes
 """
 from Enums import Type, Mutation
 import numpy as np
+import pandas as pd
 
-
-# def switch(type:Type):
-#     """
-#     """
-#     return type.name
-
-
-def generateName(type:Type, num):
+def generateName(type:Type):
     """Make names for different objects of different classes"""
     # name = type.value + str(num)
     nums = range(0,10)
     idList = np.random.choice(nums, size=10, replace=True)
-    name = type.value + "".join( map(str,idList) )
+    nameEnd = "".join( map(str,idList) )
+    name = "%s%s" % (type.value,nameEnd)
     return name
 
+def initRecord():
+    """
+    returns a dataframe that records information to this phage population
+    """
+    record = pd.DataFrame(None, columns=["timestep", "name", "pop", "dpop", "dpop_pop","type", "spacers"])
+    
+    return record
 
 def dispatch_on_value(func):
     """
@@ -68,15 +70,7 @@ def runProcess(func):
     def wrapper(*args,**kw):
 
         n = 1.0 # default expected number of events
-        try: kw["p"]
-        except KeyError:
-            print("Probability per event p not given. Assigning p=0")
-            p = 0.0
-        else:
-            p = kw["p"]
-        
-        
-        item_list = list()
+        p = kw.get("p",0.0)
 
         for num in args[1:len(args)]:
 
@@ -95,17 +89,13 @@ def runProcess(func):
             # finally: 
             #     print(num)
             n *= num 
+        item_list = []
         if n > 0 and p>0:
             
             numEvents = np.random.binomial(n,p) 
-            # print(str(lam) + " -> " + str(numEvents))
-            # print(numEvents)
-            # i = 0 # for iteration
             
-            for i in range(0,numEvents):
-                
-                item_list.append( func(args[0],**kw, num=i) )
-                # print(value)
+            item_list = [func(args[0],**kw) for i in range(numEvents)]
+            
         return item_list
 
     return wrapper
@@ -117,52 +107,64 @@ def testFunc(*args, b=""):
     
 
         
-# print(testFunc(2,3, b = "Asd"))
+import pandas as pd
+# import numpy as np
 
-# NUCLEOTIDES = ("A","C","G","T")
+# d = {
+#     "a":{"1":True,"2":True,"3":False},
+#     "b":{"1":True,"2":True,"3":False},
+#     "c":{"1":True,"2":True,"3":False}
+# }
 
-# class Test():
+# s = pd.Series(data = {"a":1,"b":2,"c":3})
+# print(s)
+# s["a"] = "beeg"
+# print(s["a"])
 
-#     @dispatch_on_value
-#     def mutate(self, mutation, genome:str):
-#         pass # only runs if a mutation occurs that's not in thhe class
-        
+# def func(val):
+#     b = {"5":"five","6":"six","4":"four"}
+#     n = val.index
+#     # print(val.where(val is dict,"not dict"))
 
-#     @mutate.register(Mutation.SNP)
-#     def _(self, mutation, genome:str):
 
-#         nt = np.random.choice(NUCLEOTIDES) # the new nucleotide
+import time
+from tqdm import tqdm
 
-#         gLength = len(genome) # genome length
-#         i = np.random.choice( range(0, gLength) )
-#         # make genome into a list to change position
-#         genomeList = list(genome) 
-#         genomeList[i] = nt
-#         newGenome = "".join(genomeList)
 
-#         return newGenome
 
-#     @mutate.register(Mutation.DELETION)
-#     def _(self, mutation, genome:str):
-        
-#         gLength = len(genome) # genome length
-#         i = np.random.choice( range(0, gLength) )
-#         # make genome into a list to delete position
-#         genomeList = list(genome)
-#         genomeList.pop(i)
-#         newGenome = "".join(genomeList)
+# bar = pb.ProgressBar(maxval=100, widgets=widgets).start()
 
-#         return newGenome
+for i in tqdm(range(100)):
+    time.sleep(0.1)
+    # bar.update(i)
 
-a = range(0,10)
-N=10**6
-P=10**7
-ab=10**-7
-m=10**-5
-lam = N*P*ab*m
-n = N*P*ab
-# def run(**kw):
-#     print(kw["p"])
-# run(p=1)
-# print(np.random.poisson(lam =lam, size = 10))
-# print(np.random.binomial(n=n,p=m,size=10))
+
+df = pd.DataFrame(None, columns=("a","b","c"))
+df.loc[0] = df.columns.map(pd.Series({"a":1,"b":3,"c":3}))
+df.loc[1] = df.columns.map(pd.Series({"b":29,"a":3,"c":3}))
+
+# print(df)
+
+# df2 = pd.DataFrame(None, columns=("a","b","c"))
+# df2.loc[0] = df.columns.map(pd.Series({"a":1,"b":3,"c":3}))
+
+# df2 = df2.append(df, ignore_index = True )
+# print(df2)
+# df1 = df.apply(lambda col:func(col),axis=0)
+# print(df)
+# import argparse
+
+# parser = argparse.ArgumentParser()
+
+# parser.add_argument('-p')
+# parser.add_argument('-pS')
+# parser.add_argument('--adsp')
+# parser.add_argument('-o','--output', default='comim', type=str, help="Desired name of output path")
+
+# arg = parser.parse_args(["-pS","2"])
+# print(arg.pS)
+
+# a = initRecord()
+
+# a.loc[0] = [1, 'name', 1,2,"N"]
+# print(a)

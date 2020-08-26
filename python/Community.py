@@ -1,7 +1,9 @@
 ## Ford Fishman
 
 from copy import copy, deepcopy
-import Phage; import Population; import Strain
+import timeit
+from Phage import Phage; from Population import Population
+from Strain import Strain; from Crispr import Crispr
 import general as gen; from Enums import Mutation, Type
 import pandas as pd; import numpy as np
 ##########################################################################################################
@@ -9,21 +11,33 @@ import pandas as pd; import numpy as np
 class Community():
 
     """
-    population (dict): dictionary of populations by name
+    pS (float): 
+    strains (dict): dictionary of strains by name
     phages (dict): dictionary of phages by name
     k (int): carrying capacity
     """
 
-    def __init__(self, populations:dict, phages:dict=None):
-        self.__populations = populations
-        self.__strains = dict()
-        self.__phages = phages
-        self.__comSizeOverTime = list()
-        self.__phagePopOverTime = list()
-        self.__resOverTime = list()
-        self.__vulnOverTime = list()
+    def __init__(self, pS:float, m:float, l:float, strains:dict, phages:dict=None):
+
+        self.pS = pS
+        self.m = m
+        self.l = l
+        # self.populations = dict()
+        self.strains = strains
+        self.phages = phages
+
+        # total population at each timestep
+        self.NList = list() # hosts
+        self.PList = list() # phage
+        self.IList = list() # spacer variants
+        self.SList = list() # initial host variant
+
         self.__updateComSize()
-        self.__updateStrainPhageDF()
+        self.strainTimes = list()
+        self.phageTimes = list()
+        self.dfTimes = list()
+        self.otherTimes = list()
+        self.record = gen.initRecord()
 
 ##########################################################################################################
 
@@ -32,64 +46,36 @@ class Community():
     Attribute functions
     """
 
-    def getPopulation(self, popName):
-
-        try: 
-            self.__populations[popName]
-
-        except KeyError:
-            print("Population does not exist")
-
-        else: 
-            return self.__populations[popName]
-
-    def getPhage(self, phageName):
-
-        try: 
-            self.__phages[phageName]
-
-        except KeyError:
-            print("Phage does not exist")
-
-        else: 
-            return self.__phages[phageName]
-    
-
-    def totalComSize(self):
-        return self.__totalComSize
-
-    def comSizeOverTime(self):
-        return self.__comSizeOverTime
-    
-    def resOverTime(self):
-        return self.__resOverTime
-    
-    def vulnOverTime(self):
-        return self.__vulnOverTime
-
-    def phagePopOverTime(self):
-        return self.__phagePopOverTime
-    
-    def phages(self):
-        """Remove, only using for testing"""
-        return self.__phages
-
     def richness(self)->int:
         """Returns strain richness for entire community"""
-        richness = 0
-
-        for pop in self.__populations.values():
-            richness += pop.richness()
-
-        return richness
+        return len(self.strains)
 
     def spacerRichness(self)->list:
-        """per species spacer richness"""
-        pops = self.__populations.values()
+        """how many unique spacers are in this community?"""
 
-        return [ pop.spacerRichness() for pop in pops ] 
+        uniqueSpacers = set()
+        
 
+        for strain in self.strains.values():
 
+            spacers = strain.crispr.spacers # the set of spacers this strain has
+            uniqueSpacers.update(spacers)
+
+        return len(uniqueSpacers)
+
+    def fullRecord(self):
+        """Record of all strain and phage data from the beginning to the current step"""
+        record = self.record
+
+        for phage in self.phages.values():
+            
+            record = record.append( phage.record, ignore_index = True)  
+
+        for strain in self.strains.values():
+
+            record = record.append( strain.record, ignore_index = True )  
+        
+        return record
 
 
 
@@ -98,7 +84,7 @@ class Community():
     """
     Main timestep function
     """
-    def timestep(self, aH:float, bH:float, c:float, y:float, bP:float, absP:float, dP:float, pS:float, m:float):
+    def timestep(self, step:int, maxtimestep=1000):
         """
         N (int): total community size
         a (float): competition coefficient
@@ -106,63 +92,103 @@ class Community():
         c (float): cost of crispr
         y (float):
         bP (float): phage birth rate
-        absP (float): aborption rate of phage
+        adsP (float): aborption rate of phage
         dP (float): decay rate of phage
         pS (float): probability of spacer forming during infection per host
         """
-        # tHost=0 # for testing
 
-        pops = deepcopy(self.__populations)
-        phages = deepcopy(self.__phages)
-        totalResistant = 0
-        totalVulnerable = 0
-
-        for popName, pop in pops.items():
-
-            p = self.infectingPhages(pop)
-
-            pops[popName].timestep(N=self.totalComSize(),a=aH,b=bH,c=c,y=y,absP=absP,p=p, pS=pS)
-            totalResistant += pop.resSize()
-            totalVulnerable += pop.vulnSize()
-
+        # pops = deepcopy(self.populations)
+        phages = deepcopy(self.phages)
+        strains = deepcopy(self.strains)
+        pS = self.pS
+        m = self.m
+        l = self.l
+        N = self.N # total cells in system
+        totalImmune = 0
+        totalSusceptible = 0
         newPhages = list()
+        newStrains = list()
+        # keep track of each member going extinct
         extinctPhageNames = set()
+        extinctStrainNames = set()
 
-        # ind = 0
-        # phageGenomes = set()
+        for strainName, strain in strains.items():
 
-        for phageName, phage in phages.items(): 
-
-            # phageGenomes.add(phage.genome())
-            if phage.pop() == 0: # remove extinct phages from community
-                extinctPhageNames.add(phageName)
+            if strain.pop == 0 and strain.ipop == 0:
+                extinctStrainNames.add(strainName)
                 continue
 
-            Ns = self.totalVulnerable(phageName) # hosts vulnerable to this phage
+            if strain.hasCost():
+                totalImmune += strains[strainName].pop
+            else:
+                totalSusceptible += strains[strainName].pop
 
+            for phageName,phage in phages.items():
 
-            phages[phageName].timestep(Ns=Ns, bP=bP, absP=absP, dP=dP)
+                if strain.isInfectable(phage): # can phage infect this host?
+                    newInfections = phage.pop*phage.adsp*strain.pop
 
-            n = absP * bP * Ns * phage.pop() # number of new phages
+                else:
+                    # new infections due to CRISPR failure rate
+                    newInfections = phage.pop*phage.adsp*strain.pop*strain.f
+                    # failed infections remove phage from system
+                    failedInfections = phage.pop*phage.adsp*strain.pop*(1-strain.f)
 
-            if n == 0:
-                continue
+                currentInfections = strain.infections.get(phageName, 0)
+                phage.adsorbed += newInfections + failedInfections # phage keeps tracked of adsorbed members
+                lysisEvents = currentInfections * l # how many infections are now lysing?
+                # lysisEvents = np.random.binomial(n=currentInfections,p=l) 
+                phage.lysisEvents += lysisEvents
+                newVirions = lysisEvents*phage.beta
+                strain.infections[phageName] = currentInfections + newInfections - lysisEvents
 
-            newPhages = [*newPhages, *self.phageMutation(absP, bP, Ns, phage.pop(), p=m, phage=deepcopy(phage))]
+                newPhages += self.phageMutation(newVirions, p=m, phage=deepcopy(phage))
 
-        # print(len(phageGenomes))
-        # print(len(self.__phages))
-        newPhages_dict = {phage.name():phage for phage in newPhages}
+                if not strain.crispr is None: # if the strain has a crispr locus
+                    newStrains += self.newSpacer(newInfections,p=pS, strain=deepcopy(strain), phage=phage)
+
+            strains[strainName].timestep(N=N,l=l,step=step)
+
+        for phageName, phage in phages.items():
+            proxyPop = phage.lysisEvents*phage.beta + phage.pop
+            if proxyPop < 1: # remove extinct phages from community
+                n = np.random.uniform()
+
+                if n<0.01 or proxyPop<0.1: extinctPhageNames.add(phageName)
+
+            # if proxyPop < 0.8: # remove extinct phages from community
+            #     extinctPhageNames.add(phageName)
+            #     continue
+
+            phages[phageName].timestep(step)
+
+        newPhages_dict = {phage.name:phage for phage in newPhages}
 
         phages.update(newPhages_dict)
         finalPhages = {phageName:phage for phageName,phage in phages.items() if not phageName in extinctPhageNames}
+        newStrains_dict = {newStrain.name:newStrain for newStrain in newStrains}
+        strains.update(newStrains_dict)
+        finalStrains = {strainName:strain for strainName,strain in strains.items() if not strainName in extinctStrainNames}
+        
+        # Add records of extinct members to master record
+    
+        # append = self.record.append
 
-        self.__populations = pops
-        self.__phages = finalPhages
+        for phageName in extinctPhageNames:
+            
+            self.record = self.record.append( self.phages[phageName].record, ignore_index = True )  
+
+        for strainName in extinctStrainNames:
+
+            self.record = self.record.append( self.strains[strainName].record, ignore_index = True )  
+
+        self.phages = finalPhages
+        self.strains = finalStrains    
+        
         self.__updateComSize()
-        self.__updateStrainPhageDF()
-        self.__resOverTime.append(totalResistant)
-        self.__vulnOverTime.append(totalVulnerable)
+
+        self.IList.append(totalImmune)
+        self.SList.append(totalSusceptible)
 
         return None
 
@@ -172,62 +198,17 @@ class Community():
     Other functions
     """
 
-    def infection(self):
-        """might add this in with IBM"""
-        pass
-
-    def vulnerableStrains(self, phageGenome:str, receptorName:str):
-        """returns a dict of vulnerable strains to the phage"""
-        pops = self.__populations
-        vStrains = set()
-
-        for pop in pops.values():
-
-            vStrains.update( pop.vulnerableStrains(phageGenome,receptorName) )#  all vulnerable strains from each population
-
-        return vStrains
-
-    def totalVulnerable(self, phageName:str) -> float:
-        """returns the total number of vulnerable hosts to a specific phage"""
-        # pops = self.__populations
-        total = 0
-
-        areStrainsVulnerable = self.__StrainPhageDF[phageName]
-
-        for strainName, isVulnerable in areStrainsVulnerable.items():
-            # print(isVulnerable)
-            if isVulnerable:
-
-                total += self.__strains[strainName].pop()
-
-        return total
-
-    def infectingPhages(self, pop:Population):
-        """
-        Return the phages that infect each strain in pop (dict) 
-        """
-        phages = dict() # dict of phageName:phage
-        strainNames = set(pop.strains().keys())
-
-        for strainName, row in self.__StrainPhageDF.iterrows():
-
-            if strainName in strainNames:
-
-                phages[strainName] = {phageName:self.__phages[phageName] for phageName, infects in row.items() if infects}
-
-        return phages
-
     def phagesPopDict(self):
         """
         returns dictionary of phage name to phage pop (str:float)
         """
-        phages = self.__phages
-        popDict = {phageName:phage.pop() for phageName, phage in phages.items()}
+        phages = self.phages
+        popDict = {phageName:phage.pop for phageName, phage in phages.items()}
 
         return popDict
 
     @gen.runProcess
-    def phageMutation(self, *args, p:float=0, phage:Phage=None, num:int=0) -> Phage:
+    def phageMutation(self, *args, p:float=0, phage:Phage=None) -> Phage:
         """
         """
         if phage is None:
@@ -235,19 +216,56 @@ class Community():
             raise KeyError("Need to specify strain name and phage")
 
         newGenome = phage.mutate(Mutation.SNP)
-        newName = gen.generateName(Type.PHAGE, num = len(self.__phages)+num)
-        mod = phage.fitness()
+        newName = gen.generateName(Type.PHAGE)
+        mod = phage.fitness
         # mod = 1 
-        fitness = np.random.uniform(0,1.1) * mod # some cost to mutating genome
+        fitness = np.random.uniform(0,1.5) * mod # some cost to mutating genome
         # fitness = 1
 
-        newPhage = Phage.Phage(name=newName, receptor=phage.receptor(),genome=newGenome, fitness = fitness)
+        newPhage = Phage(
+            name=newName, 
+            adsp = phage.adsp, 
+            beta = phage.beta, 
+            d = phage.d, 
+            receptor=phage.receptor,
+            genome=newGenome, 
+            fitness = fitness,
+            pop = 1.0
+        )
         
         return newPhage
 
+    @gen.runProcess
+    def newSpacer(self, *args, p:float=0, strain:Strain=None, phage:Phage=None):
 
+        """Adds a new strain based on another but with a new spacer"""
 
-    
+        if strain is None or phage is None:
+            raise KeyError("Need to specify strain name and phage")
+        oldSpacers = strain.crispr.spacers
+        
+        a = strain.a
+        b = strain.b 
+        c = strain.c
+        f = strain.f 
+        y = strain.y
+
+        crispr = Crispr( oldSpacers ) 
+
+        spacer = crispr.makeSpacer( genome = phage.genome ) # generate a new spacer based on phage genome
+        crispr.addSpacer(spacer)
+            
+        newName = gen.generateName(Type.STRAIN)
+
+        newStrain = Strain( # organism with new spacer is a new strain, one starting cell
+            name=newName,
+            a=a, b=b, c=c, f=f, y=y,
+            crispr=crispr,
+            phReceptors=strain.phReceptors,
+            pop = 1.0
+        )
+        
+        return newStrain
 
 ##########################################################################################################
 
@@ -257,45 +275,29 @@ class Community():
     
     def __updateComSize(self):
         """Re-total community size across all populations"""
-        populations = self.__populations
+        # populations = self.populations
         comSize = 0
 
-        for pop in populations.values():
-            comSize += pop.popSize()
-            self.__strains.update( pop.strains() )
+        # for pop in populations.values():
+        #     comSize += pop.popSize
+        #     self.strains.update( pop.strains )
+        for strain in self.strains.values():
+            comSize += strain.pop
 
-        self.__totalComSize = comSize
-        self.__comSizeOverTime.append(comSize)
+        self.N = comSize
+        self.NList.append(comSize)
 
         phagePop = 0
 
         for pop in self.phagesPopDict().values():
             phagePop += pop
 
-        self.__phagePopOverTime.append(phagePop)
+        self.PList.append(phagePop)
 
         return None
 
-    def __updateStrainPhageDF(self):
-        """
-        """
-
-        strains = self.__strains
-
-        df = pd.DataFrame(None, index = strains.keys(), columns=self.__phages.keys())
-
-        for phageName, phage in self.__phages.items():
-
-            vStrains = self.vulnerableStrains(phageGenome=phage.genome(), receptorName=phage.receptor().name())
-            # print(vStrains) 
-            Strains = {strainName:(strain in vStrains) for strainName, strain in strains.items()} # which strains are vulnerable to this phage
-
-            df[phageName] = df.index.map(Strains)
-
-        self.__StrainPhageDF = df
-
-        return None
-
+        
+    
 
 ##########################################################################################################
     
@@ -304,32 +306,3 @@ Print testing
 """
 
 
-# testing pandas
-import string
-
-a = pd.DataFrame(None, index=range(0,4), columns=list(string.ascii_lowercase[0:5]))
-# a.loc[2] = [1,2,3,4,5]
-
-b = {
-    1 : 1,
-    0 : 2,
-    2 : 0,
-    3 : 4
-}
-# print(a.index)
-a["a"] = a.index.map(b)
-for x,y in a.iterrows():
-    for z,d in y.items():
-        # print(z,d)
-        continue
-    continue
-# print(a["a"])
-# print(a.loc[0]["a"])
-
-# c = list(range(0,5))
-# print(
-#     # [x for x in c if x!=3]
-# )
-
-d = np.random.poisson(0.1*20, 10)
-# print(d)

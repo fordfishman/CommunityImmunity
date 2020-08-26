@@ -1,6 +1,8 @@
 ## Ford Fishman
 
 import Spacer; import Crispr; import PhageReceptor
+from Phage import Phage
+import general as gen
 import Error as er
 
 ##########################################################################################################
@@ -8,83 +10,90 @@ import Error as er
 class Strain():
 
     """
-    name (str)
-    crispr (Crispr)
-    phReceptors (dict)
+    name (str): tag for this strain
+    a (float): competition coefficient (hosts)
+    b (float): birth rate (hosts/timestep)
+    c (float): cost of CRISPR [0,1]
+    f (float): failure rate of CRISPR immunity
+    crispr (Crispr): CRISPR locus, if none is present, keep as None
+    phReceptors (dict): dictionary of this strains phage receptors
     activeReceptors (dict)
     pop (float)
-    intrinsicFitness (float)
-    phages (set(str)): names of phages this strain can be infected by
     """
-    def __init__(self, name:str, crispr:Crispr= None, phReceptors:dict = None, pop:float = 1):
-        self.__name = name
-        self.__crispr = crispr
-        self.__phReceptors = phReceptors
-        self.__activeReceptors = dict()
-        self.__pop = pop
-        self.__intrinsicFitness = 1 # CHANGE THIS AT SOME POINT WHEN I ADD IN RESOURCES
-        self.__phages = set()
+    def __init__(self, name:str, a:float, b:float, c:float, f:float,y:float, crispr:Crispr= None,phReceptors:dict = None, pop:float = 1):
+        self.name = name
+        self.crispr = crispr
+        self.phReceptors = phReceptors
+        self.activeReceptors = dict()
+        self.pop = pop
+        self.ipop = 0 # infected pop
+        self.intrinsicFitness = 1 # CHANGE THIS AT SOME POINT WHEN I ADD IN RESOURCES
+        self.infections = dict()
+
+        self.a = a
+        self.b = b
+        self.c = c
+        self.y = y
+        self.f = f
+
+        self.record = gen.initRecord()
         
         if not phReceptors is None:
             for receptorName in phReceptors: # for all receptors in a strain
                 # if the receptor just became active, add to active dict
-                if phReceptors[receptorName].isExpressed():
-                    self.__activeReceptors[receptorName] = phReceptors[receptorName]
-
-##########################################################################################################
-
-    """
-    Attribute functions
-    """
-
-    def name(self):
-        return self.__name
-
-    def phReceptors(self):
-        return self.__phReceptors
-
-    def getReceptor(self, receptorName:str):
-        return self.__phReceptors[receptorName]
-
-    def crispr(self):
-        return self.__crispr
-    
-    def crisprLength(self):
-        return len(self.__crispr)
-
-    def pop(self):
-        return self.__pop
-
-    def intrinsicFitness(self):
-        return self.__intrinsicFitness
-
-    def phages(self):
-        return (self.__phages)
+                if phReceptors[receptorName].isExpressed:
+                    self.activeReceptors[receptorName] = phReceptors[receptorName]
 
 ##########################################################################################################
     """
     Main timestep function
     """
-    def timestep(self, N:int, a:float, b:float, c:float, y:float, absP:float, p:float ):
+    def timestep(self, N:int, l:float, step:int):
         """
         N (int): total host density
-        a (float): competition coefficient
-        b (float): intrinsic growth rate
-        c (float): cost of crispr
-        absP (float): absorbance rate of phage to host
-        p (float): phage density
-        y (float):
+        l (float): probability an infection lyses
+        step (int): current timestep
         """
+
+        i = len(self.record) # how long this strain has been around
+
+        a = self.a
+        b = self.b
+        c = self.c 
+        y = self.y
+        Nh = self.pop
+
+        currentInfections = sum(self.infections.values())
+        self.ipop = currentInfections
+
+        # labeling system for record
+        strainType = 'novel'
 
         if not self.hasCost(): # set cost to 0 if strain does not have CRISPR-associated cost
             c = 0
+        if self.name == 's1':
+            strainType = 'initial'
+        
+        # fitness 
+        r = b * ( 1 - c )
+        # self.ipop += currentInfections - l * self.ipop # infected pop 
+        
+        # self.pop = ( r*Nh - currentInfections)/( 1 + ( N/a )**y ) 
+        # based upon Beverton-Holt model
+        self.pop = ( r*Nh )/( 1 + ( N/a )**y ) - currentInfections
+        # Extinction threshold
+        if self.pop+self.ipop < 0.1: 
+            self.pop = 0
+            self.ipop = 0
 
-        # fitness
-        r = b * ( self.__intrinsicFitness - c ) - absP*p
-            # self.__pop = ( b*self.__pop )/( 1 + ( N/a )**y ) # Beverton-Holt Model
-        # reproduce
-        self.__pop = ( r*self.__pop )/( 1 + ( N/a )**y ) 
-        if self.__pop < 1: self.__pop = 0
+        if not self.crispr is None:
+            spacers = len(self.crispr)
+        else:
+            spacers = None 
+
+        self.record.loc[i] = [step, self.name, self.pop, self.pop-Nh, (self.pop-Nh)/Nh, strainType, spacers]
+
+
         return None
 
 ##########################################################################################################
@@ -93,47 +102,44 @@ class Strain():
     Other functions
     """
     def addSpacer(self,spacer:str):
-        if not self.__crispr is None:
+        if not self.crispr is None:
 
-            self.__crispr.addSpacer(spacer)
+            self.crispr.addSpacer(spacer)
         return None
         
 
-    def isVulnerable(self, receptor:str): 
-        """Does this strain have the phage receptor to be vulnerable to this phage"""
+    def isSusceptible(self, receptor:str): 
+        """Does this strain have the phage receptor to be susceptible to this phage"""
         # if the receptor is in strain and is expressed
-        return receptor in self.__phReceptors and self.__phReceptors[receptor].isExpressed()  
+        return receptor in self.phReceptors and self.phReceptors[receptor].isExpressed  
 
 
     def isImmune(self, phageGenome:str):
         """Does the strain have CRISPR resistance"""
-        crispr = self.__crispr
-        
-        return crispr.hasSpacer( genome = phageGenome )
+        isImmune = False
 
-    def updatePhages(self, receptor:str, phageGenome:str, phageName:str):
-        """Updates set of infectable phages"""
+        if self.crispr is None:
+            isImmune = False
+        else:
 
-        if self.isVulnerable(receptor) and not self.isImmune(phageGenome):
+            isImmune = self.crispr.hasSpacer( genome = phageGenome )
 
-            self.__phages.add(phageName)
-        
-        else: 
+        return isImmune
 
-            self.__phages.remove(phageName)
-
-        return None
+    def isInfectable(self, phage:Phage):
+        """Can this phage infect this strain"""
+        return self.isSusceptible(phage.receptor.name) and not self.isImmune(phage.genome)
 
     def addReceptor(self, receptor:PhageReceptor.PhageReceptor):
         """Add a receptor to strain"""
-        self.__phReceptors[receptor.name()] = receptor
+        self.phReceptors[receptor.name] = receptor
 
         return None
 
     def removeReceptor(self, receptorName:str):
         """Removes receptor from strain. Use when a receptor is modified (old one is lost, new one is gained)"""
         
-        self.__phReceptors.pop(receptorName)
+        self.phReceptors.pop(receptorName)
         
         return None
 
@@ -141,11 +147,13 @@ class Strain():
         """Is there a CRISPR-associated cost to this strain?"""
         cost = False # initialize cost to be 0
 
-        if not self.__crispr is None: # if strain has a crispr 
+        if not self.crispr is None: # if strain has a crispr 
 
-            cost = self.__crispr.hasCost()
+            cost = self.crispr.hasCost
 
         return cost
+
+    
     # def changeReceptorActivity(self, receptorName:str, active:bool):
 
     #     phReceptors = self.__phReceptors
@@ -166,11 +174,6 @@ class Strain():
     #     finally:
     #         return None
     
-##########################################################################################################
-
-    """
-    Private methods
-    """
 
     
         

@@ -1,6 +1,6 @@
 ## Ford Fishman
 
-import numpy as np
+import numpy as np; import pandas as pd
 import PhageReceptor; import Population
 from Enums import Mutation
 import general as gen
@@ -21,21 +21,31 @@ class Phage():
     # strains (set(str)): set of strains this phage can infect
     """
 
-    def __init__(self, name:str, receptor:PhageReceptor, genome:str = None, genomeLength:int = 100, pop:float = 1, fitness:float = 1):
+    def __init__(self, name:str, adsp:float, beta:float, d:float, receptor:PhageReceptor, genome:str = None, genomeLength:int = 100, pop:float = 1, fitness:float = 1):
 
-        self.__name = name
-        self.__pop = pop
-        self.__receptor = receptor
-        self.__fitness = fitness
+        self.name = name
+        self.pop = pop
+        self.receptor = receptor
+        self.fitness = fitness
         # self.__strains = set()
         # self.__targetPop = targetPop
+        self.record = None
+        self.type = 'phage'
+
+        self.adsp = adsp
+        self.beta = beta
+        self.d = d
+        self.adsorbed = 0
+        self.lysisEvents = 0
+
+        self.record = gen.initRecord()
 
         if not genome is None: 
-            self.__genome = genome
+            self.genome = genome
 
         else: # Generates a pseudo-genome for the phage
             # Essentially provides it with pseudo-spacers
-            self.__genome = "".join(np.random.choice(NUCLEOTIDES, size=genomeLength, replace=True))
+            self.genome = "".join(np.random.choice(NUCLEOTIDES, size=genomeLength, replace=True))
 
 ##########################################################################################################
 
@@ -43,43 +53,34 @@ class Phage():
     Main timestep function
     """
 
-    def timestep(self, Ns:float, bP:float, absP:float, dP:float):
+    def timestep(self, step:int):
         """
-        Ns (float): number of susceptible hosts
-        bP (float): burst size of phage
-        absP (float): absorption rate of phage
-        dP (float): decay rate of phage  
+        step (int): current timestep
         """
 
-        Np = self.__pop # phage pop
+        i = len(self.record) # how long this phage has been around
+        # adsp = self.adsp
+        beta = self.beta
+        d = self.d
 
-        self.__pop += absP*(bP-1)*Ns*Np*self.__fitness - dP*Np
+        Np = self.pop # phage pop
+        adsorbed = self.adsorbed
+        lysisEvents = self.lysisEvents
+        
+        # self.__pop += adsp*(beta-1)*Ns*Np*self.__fitness - d*Np
+        # self.pop += l*beta*inf - adsp*Np*Ns - d*Np
+        self.pop += beta*lysisEvents - adsorbed - d*Np
+        # if beta*inf < 1 and self.pop < 1: self.pop = 0
+        # if self.pop < 1: self.pop = 0
+        
+        # record data from this timestep
+        # columns: "timestep", "name", "pop", "dpop", "dpop_pop","type", "spacers"
+        self.record.loc[i] = [step, self.name, self.pop, self.pop-Np, (self.pop-Np)/Np, self.type, None]
 
-        if self.__pop < 1: self.__pop = 0
+        self.lysisEvents = 0
+        self.adsorbed = 0
         return None
 
-##########################################################################################################
-    
-    """
-    Attribute functions
-    """
-    def genome(self):
-        return self.__genome
-
-    def receptor(self):
-        return self.__receptor
-    
-    def name(self):
-        return self.__name
-    
-    def pop(self):
-        return(self.__pop)
-
-    def fitness(self):
-        return(self.__fitness)
-
-    # def targetPop(self):
-    #     return(self.__targetPop)
 
 ##########################################################################################################
 
@@ -89,7 +90,7 @@ class Phage():
 
     @gen.dispatch_on_value
     def mutate(self, mutation) -> str:
-        pass # only runs if a mutation occurs that's not in thhe class
+        pass # only runs if a mutation occurs that's not in the class
         
 
     @mutate.register(Mutation.SNP)
@@ -97,10 +98,10 @@ class Phage():
         # print(self.__genome)
         nt = np.random.choice(NUCLEOTIDES) # the new nucleotide
 
-        gLength = len(self.__genome) # genome length
+        gLength = len(self.genome) # genome length
         i = np.random.choice( range(0, gLength) )
         # make genome into a list to change position
-        genomeList = list(self.__genome) 
+        genomeList = list(self.genome) 
         genomeList[i] = nt
         newGenome = "".join(genomeList)
         # print(newGenome)
@@ -109,10 +110,10 @@ class Phage():
     @mutate.register(Mutation.DELETION)
     def _(self, mutation) -> str:
         
-        gLength = len(self.__genome) # genome length
+        gLength = len(self.genome) # genome length
         i = np.random.choice( range(0, gLength) )
         # make genome into a list to delete position
-        genomeList = list(self.__genome)
+        genomeList = list(self.genome)
         genomeList.pop(i)
         newGenome = "".join(genomeList)
 
@@ -128,5 +129,6 @@ class Phage():
 """
 print testing
 """
-a = "".join(np.random.choice(NUCLEOTIDES, size=20, replace=True))
-# print(len(a))
+# a = {"1":{"a":3,"b":4},"2":{"a":100}}
+
+# print(*a)
