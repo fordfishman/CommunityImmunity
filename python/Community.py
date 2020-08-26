@@ -11,22 +11,27 @@ import pandas as pd; import numpy as np
 class Community():
 
     """
-    population (dict): dictionary of populations by name
+    pS (float): 
+    strains (dict): dictionary of strains by name
     phages (dict): dictionary of phages by name
     k (int): carrying capacity
     """
 
-    def __init__(self, pS, m, l, strains:dict, phages:dict=None):
+    def __init__(self, pS:float, m:float, l:float, strains:dict, phages:dict=None):
+
         self.pS = pS
         self.m = m
         self.l = l
-        self.populations = dict()
+        # self.populations = dict()
         self.strains = strains
         self.phages = phages
-        self.comSizeOverTime = list()
-        self.phagePopOverTime = list()
-        self.imOverTime = list()
-        self.susOverTime = list()
+
+        # total population at each timestep
+        self.NList = list() # hosts
+        self.PList = list() # phage
+        self.IList = list() # spacer variants
+        self.SList = list() # initial host variant
+
         self.__updateComSize()
         self.strainTimes = list()
         self.phageTimes = list()
@@ -46,15 +51,21 @@ class Community():
         return len(self.strains)
 
     def spacerRichness(self)->list:
-        """per species spacer richness"""
-        pops = self.populations.values()
+        """how many unique spacers are in this community?"""
 
-        return [ pop.spacerRichness() for pop in pops ] 
+        uniqueSpacers = set()
+        
+
+        for strain in self.strains.values():
+
+            spacers = strain.crispr.spacers # the set of spacers this strain has
+            uniqueSpacers.update(spacers)
+
+        return len(uniqueSpacers)
 
     def fullRecord(self):
         """Record of all strain and phage data from the beginning to the current step"""
         record = self.record
-        # append = record.append
 
         for phage in self.phages.values():
             
@@ -86,17 +97,18 @@ class Community():
         pS (float): probability of spacer forming during infection per host
         """
 
-        pops = deepcopy(self.populations)
+        # pops = deepcopy(self.populations)
         phages = deepcopy(self.phages)
         strains = deepcopy(self.strains)
         pS = self.pS
         m = self.m
         l = self.l
-        N = self.totalComSize
+        N = self.N # total cells in system
         totalImmune = 0
         totalSusceptible = 0
         newPhages = list()
         newStrains = list()
+        # keep track of each member going extinct
         extinctPhageNames = set()
         extinctStrainNames = set()
 
@@ -172,8 +184,8 @@ class Community():
         
         self.__updateComSize()
 
-        self.imOverTime.append(totalImmune)
-        self.susOverTime.append(totalSusceptible)
+        self.IList.append(totalImmune)
+        self.SList.append(totalSusceptible)
 
         return None
 
@@ -269,15 +281,15 @@ class Community():
         for strain in self.strains.values():
             comSize += strain.pop
 
-        self.totalComSize = comSize
-        self.comSizeOverTime.append(comSize)
+        self.N = comSize
+        self.NList.append(comSize)
 
         phagePop = 0
 
         for pop in self.phagesPopDict().values():
             phagePop += pop
 
-        self.phagePopOverTime.append(phagePop)
+        self.PList.append(phagePop)
 
         return None
 

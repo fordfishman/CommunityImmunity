@@ -49,14 +49,6 @@ class Crispr():
 
         return match
     
-    # def hasCost(self):
-    #     return self.__hasCost
-
-    # def isActive(self):
-    #     return (self.__isActive)
-
-    # def spacers(self):
-    #     return self.__spacers
 
 ##########################################################################################################
 

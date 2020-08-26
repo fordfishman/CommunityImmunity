@@ -10,7 +10,7 @@ import argparse
 import Strain; import Population; import Community; import Phage; import PhageReceptor; import Crispr
 import general as gen
 import timeit; import multiprocessing as mp; from functools import partial
-from progressbar import progressbar
+from tqdm import tqdm
 
 """
 Setting up arguments
@@ -229,10 +229,10 @@ def sim_proc(community, timesteps):
 
     community.summary["richness"] = maxSRich
     community.summary["phageRichness"] = maxPRich 
-    community.summary["pop"] = community.totalComSize
-    community.summary["phage"] = community.phagePopOverTime[-1]
-    community.summary["immune"] = community.imOverTime[-1]
-    community.summary["susceptible"] = community.susOverTime[-1]
+    community.summary["pop"] = community.N
+    community.summary["phage"] = community.PList[-1]
+    community.summary["immune"] = community.IList[-1]
+    community.summary["susceptible"] = community.SList[-1]
 
     return community
 
@@ -259,11 +259,11 @@ def one_sim():
     print("m:\t%s"%community.m)
     print("l:\t%s"%community.l)
     print()
-    print("popint:\t%s"%community.totalComSize)
-    print("phageinit:\t%s"%community.phagePopOverTime[0])
+    print("popint:\t%s"%community.N)
+    print("phageinit:\t%s"%community.PList[0])
 
 
-    N = community.totalComSize # community size
+    N = community.N # community size
     pRichness = [len( community.phagesPopDict() )] # phage richness over time
     maxPRich = pRichness[0]
     sRichness = [len( community.strains )] # strain richness over time
@@ -272,7 +272,7 @@ def one_sim():
 
     timestep = community.timestep
 
-    for i in progressbar(range(timesteps)): # run for # of timesteps
+    for i in tqdm(range(timesteps)): # run for # of timesteps
         
         timestep(i)
         pRichness.append( len( community.phagesPopDict() ) )
@@ -284,7 +284,7 @@ def one_sim():
         community.summary["richness"] = maxSRich
         community.summary["phageRichness"] = maxPRich 
 
-        # if i == 50 and community.totalComSize != 0:
+        # if i == 50 and community.N != 0:
         #     s1 = community.strains["s1"]
         #     crispr0 = Crispr.Crispr()
 
@@ -303,15 +303,15 @@ def one_sim():
 
         #     community.strains["s2"] = s2
 
-    community.summary["pop"] = community.totalComSize
-    community.summary["phage"] = community.phagePopOverTime[-1]
-    community.summary["immune"] = community.imOverTime[-1]
-    community.summary["susceptible"] = community.susOverTime[-1]
+    community.summary["pop"] = community.N
+    community.summary["phage"] = community.PList[-1]
+    community.summary["immune"] = community.IList[-1]
+    community.summary["susceptible"] = community.SList[-1]
 
     print(community.summary)
 
-    N = str(community.comSizeOverTime[-1]) # community size
-    P = str(community.phagePopOverTime[-1])
+    N = str(community.NList[-1]) # community size
+    P = str(community.PList[-1])
     print("hosts:\t%s"%(N))
     print("phages:\t%s"%(P))
     print("Strains:")
@@ -331,14 +331,14 @@ def one_sim():
     # print("Other times:")
     # print("max: %s\tmean: %s" % (max(community.otherTimes), stat.mean(community.otherTimes)))
     # print()
-    # print("max immune: %s"%(max(community.imOverTime)))
+    # print("max immune: %s"%(max(community.IList)))
     # df1 = pd.DataFrame( 
     #     list( 
     #         zip(
-    #             community.comSizeOverTime, 
-    #             community.phagePopOverTime,
-    #             community.imOverTime,
-    #             community.susOverTime, 
+    #             community.NList, 
+    #             community.PList,
+    #             community.IList,
+    #             community.SList, 
     #             range(1,timesteps+1), 
     #             ) 
     #         ),
@@ -365,7 +365,7 @@ def one_sim():
 
 def multi_sim(sims):
 
-    params = {"pS", "b", "a", "c", "f","beta", "adsp", "d", "m", "l", "popinit", "phageinit"}
+    # params = {"pS", "b", "a", "c", "f","beta", "adsp", "d", "m", "l", "popinit", "phageinit"}
     # constant_params = sorted(["_%s%s" % (param,globals()[param]) for param in params if not globals()[param] is None]) 
 
     communities = [ initialize() for i in range(sims) ]
@@ -378,7 +378,7 @@ def multi_sim(sims):
     # timestep = [ community.timestep for community in communities ] # list of all timestep functions for all sims
     # print("initial sizes")
     # for community in communities:
-    #     print(community.totalComSize)
+    #     print(community.N)
     df = pd.DataFrame(None, 
         columns=["pop","phage","immune","susceptible","richness","phageRichness","pS", "b", "a", "c", "f","beta", "adsp", "d", "m", "l", "popinit", "phageinit"],
     )

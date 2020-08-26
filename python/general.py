@@ -127,6 +127,16 @@ import pandas as pd
 #     # print(val.where(val is dict,"not dict"))
 
 
+import time
+from tqdm import tqdm
+
+
+
+# bar = pb.ProgressBar(maxval=100, widgets=widgets).start()
+
+for i in tqdm(range(100)):
+    time.sleep(0.1)
+    # bar.update(i)
 
 
 df = pd.DataFrame(None, columns=("a","b","c"))
