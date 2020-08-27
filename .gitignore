@@ -2,8 +2,6 @@
 *.pyo
 *.Rproj*
 .Rhistory
-*test*
 *moregraphs*
 *output/*
-
 .Rproj.user
