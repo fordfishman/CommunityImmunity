@@ -8,7 +8,7 @@ Modules
 import numpy as np; import pandas as pd; import sys
 import argparse
 import Strain; import Population; import Community; import Phage; import PhageReceptor; import Crispr
-import general as gen
+import general as gen; from network import createNetwork, plotBipartite
 import timeit; import multiprocessing as mp; from functools import partial
 from tqdm import tqdm
 
@@ -272,6 +272,8 @@ def one_sim():
 
     timestep = community.timestep
 
+    print('Running Simulation...')
+
     for i in tqdm(range(timesteps)): # run for # of timesteps
         
         timestep(i)
@@ -309,6 +311,10 @@ def one_sim():
     community.summary["susceptible"] = community.SList[-1]
 
     print(community.summary)
+
+    edges = community.globalInfectionEdges()
+    B = createNetwork(edges, community.allStrains.keys(), community.allPhages.keys())
+    plotBipartite(B)
 
     N = str(community.NList[-1]) # community size
     P = str(community.PList[-1])

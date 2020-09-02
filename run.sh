@@ -3,7 +3,7 @@
 
 # Set pathing
 # sourcepath=/Users/fordfishman/GitHub/CommunityImmunity
-pwd
+sourcepath=$(pwd)
 # sourcepath=/geode2/home/u030/ffishman/Carbonate/thindrives/fordfishman/GitHub/CommunityImmunity
 python=$sourcepath/python
 r=$sourcepath/r

@@ -26,6 +26,10 @@ class Community():
         self.strains = strains
         self.phages = phages
 
+        # will keep history of all strains and phages
+        self.allStrains = strains
+        self.allPhages = phages
+
         # total population at each timestep
         self.NList = list() # hosts
         self.PList = list() # phage
@@ -77,8 +81,6 @@ class Community():
         
         return record
 
-
-
 ##########################################################################################################
 
     """
@@ -127,6 +129,7 @@ class Community():
 
                 if strain.isInfectable(phage): # can phage infect this host?
                     newInfections = phage.pop*phage.adsp*strain.pop
+                    failedInfections = 0
 
                 else:
                     # new infections due to CRISPR failure rate
@@ -149,6 +152,8 @@ class Community():
 
             strains[strainName].timestep(N=N,l=l,step=step)
 
+        
+        # phage timestep 
         for phageName, phage in phages.items():
             proxyPop = phage.lysisEvents*phage.beta + phage.pop
             if proxyPop < 1: # remove extinct phages from community
@@ -162,17 +167,18 @@ class Community():
 
             phages[phageName].timestep(step)
 
+        # update dictionaries to account for new and extinct strains and phages
         newPhages_dict = {phage.name:phage for phage in newPhages}
-
         phages.update(newPhages_dict)
+        self.allPhages.update(newPhages_dict)
         finalPhages = {phageName:phage for phageName,phage in phages.items() if not phageName in extinctPhageNames}
+
         newStrains_dict = {newStrain.name:newStrain for newStrain in newStrains}
         strains.update(newStrains_dict)
+        self.allStrains.update(newStrains_dict)
         finalStrains = {strainName:strain for strainName,strain in strains.items() if not strainName in extinctStrainNames}
         
         # Add records of extinct members to master record
-    
-        # append = self.record.append
 
         for phageName in extinctPhageNames:
             
@@ -180,7 +186,9 @@ class Community():
 
         for strainName in extinctStrainNames:
 
-            self.record = self.record.append( self.strains[strainName].record, ignore_index = True )  
+            self.record = self.record.append( self.strains[strainName].record, ignore_index = True ) 
+
+        # update community attributes 
 
         self.phages = finalPhages
         self.strains = finalStrains    
@@ -210,6 +218,9 @@ class Community():
     @gen.runProcess
     def phageMutation(self, *args, p:float=0, phage:Phage=None) -> Phage:
         """
+        Generates a phage mutant with qualities based upon the original strain.
+        This function is an argument of gen.runProcess(), and is called as many times
+        as new phages are formed.
         """
         if phage is None:
 
@@ -266,6 +277,32 @@ class Community():
         )
         
         return newStrain
+    
+    def globalInfectionEdges(self):
+        """
+        Finds edges in global infection network
+        return: list of tuples
+        """
+
+        strains, phages = self.allStrains, self.allPhages
+
+        strainNames, phageNames = list(strains.keys()), list(phages.keys())
+
+        # df = pd.DataFrame(None, columns=phageNames, index=strainNames) # initialize blank dataframe
+
+        edges = list()
+
+        for strainName in strainNames:
+
+            strain = strains[strainName]
+
+            # df.loc[strainName] = [ strain.isInfectable( phages[phageName] ) for phageName in phageNames ]
+
+            edges += [ (strainName, phageName) for phageName in phageNames if strain.isInfectable( phages[phageName] )]
+
+        return edges
+
+
 
 ##########################################################################################################
 

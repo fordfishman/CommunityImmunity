@@ -127,21 +127,23 @@ import pandas as pd
 #     # print(val.where(val is dict,"not dict"))
 
 
-import time
-from tqdm import tqdm
+# import time
+# from tqdm import tqdm
 
 
 
-# bar = pb.ProgressBar(maxval=100, widgets=widgets).start()
+# # bar = pb.ProgressBar(maxval=100, widgets=widgets).start()
 
-for i in tqdm(range(100)):
-    time.sleep(0.1)
-    # bar.update(i)
+# for i in tqdm(range(100)):
+#     time.sleep(0.1)
+#     # bar.update(i)
 
 
-df = pd.DataFrame(None, columns=("a","b","c"))
-df.loc[0] = df.columns.map(pd.Series({"a":1,"b":3,"c":3}))
-df.loc[1] = df.columns.map(pd.Series({"b":29,"a":3,"c":3}))
+df = pd.DataFrame(None, columns=("a","b","c"), index=("one","two"))
+df.loc["one"] = df.columns.map(pd.Series({"a":1,"b":3,"c":3}))
+df.loc["two"] = df.columns.map(pd.Series({"b":29,"a":3,"c":3}))
+
+# print(df)
 
 # print(df)
 

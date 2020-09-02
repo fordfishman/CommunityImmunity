@@ -3,14 +3,17 @@ library(ggplot2)
 library(tidyr)
 library(scales)
 library(MASS)
-setwd("~/GitHub/CommunityImmunity/r")
-output_dir <- "/Users/fordfishman/GitHub/CommunityImmunity/output/labmeeting20200608/"
-# filename1 <- "/Users/fordfishman/GitHub/CommunityImmunity/comim_1000sims_m0_pS0.csv"
-filename1 <- "/Users/fordfishman/GitHub/CommunityImmunity/output/RED_test_1000sims.csv"
+library(here)
+
+wd <- here()
+output_dir <- paste0(wd, "/output/testingGrounds/")
+filename1 <- paste0(wd, "/output/1000sims/summary.csv")
+# filename1 <- "/Users/fordfishman/GitHub/CommunityImmunity/output/RED_test_1000sims.csv"
 # filename2 <- "/Users/fordfishman/GitHub/CommunityImmunity/output/RED_test_1000sims_absp1e-08_beta100_c0_d0.1_m1e-07_pS1e-05.csv"
 # filename3 <- "/Users/fordfishman/GitHub/CommunityImmunity/output/RED_test_1000sims_a10000000.0_c0_d0.1_l0.9_m1e-07_pS1e-05.csv"
 df1 <- read.csv(filename1, header = T, row.names = 1)
 # df2 <- read.csv(filename2, header = T, row.names = 1)
+
 
 df1$initPopPhageRatio <- df1$popinit/df1$phageinit
 
@@ -84,6 +87,18 @@ coexistencePlot <- function(df, col, xname=NULL, xlog=F, bins=40){
 }
 
 
+
+# df1.pca <- prcomp(df1[,7:18], scale. = T)
+# 
+# library(factoextra)
+# 
+# fviz_eig(df1.pca)
+# 
+# pca.plot <- fviz_pca_biplot(df1.pca,
+#                          col.ind = df1$coexistence,
+#                          col.var = "grey",
+#                          repel = T)
+# pca.plot
 
 #histograms
 
