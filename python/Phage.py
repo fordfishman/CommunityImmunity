@@ -37,6 +37,7 @@ class Phage():
         self.d = d
         self.adsorbed = 0
         self.lysisEvents = 0
+        self.descendents = 0 # the number of descendent phage types from this phage
 
         self.record = gen.initRecord()
 

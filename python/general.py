@@ -166,7 +166,12 @@ df.loc["two"] = df.columns.map(pd.Series({"b":29,"a":3,"c":3}))
 # arg = parser.parse_args(["-pS","2"])
 # print(arg.pS)
 
-# a = initRecord()
+a = initRecord()
 
-# a.loc[0] = [1, 'name', 1,2,"N"]
+a.loc[0] = [1, 'p1', 1, 2, 3,"N", 2]
+a.loc[1] = [1, 's1', 1, 2, 3,"N", 2]
+# print(a[a['name']=='s1']['pop'].max())
 # print(a)
+
+# print(generateName(Type.STRAIN))
+# print(Type.STRAIN.value[1])

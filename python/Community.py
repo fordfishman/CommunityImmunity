@@ -278,13 +278,20 @@ class Community():
         
         return newStrain
     
-    def globalInfectionEdges(self):
+    def globalInfectionEdges(self, trim:bool=True):
         """
         Finds edges in global infection network
         return: list of tuples
         """
 
-        strains, phages = self.allStrains, self.allPhages
+        if trim:
+
+            self.trimNetwork()
+            strains, phages = self.trimmedStrains, self.trimmedPhages
+
+        else:
+
+            strains, phages = self.allStrains, self.allPhages
 
         strainNames, phageNames = list(strains.keys()), list(phages.keys())
 
@@ -301,6 +308,21 @@ class Community():
             edges += [ (strainName, phageName) for phageName in phageNames if strain.isInfectable( phages[phageName] )]
 
         return edges
+
+    def trimNetwork(self)->None:
+
+        strains, phages = self.allStrains, self.allPhages
+
+        record = self.fullRecord()
+
+        self.trimmedStrains = {strainName:strain for strainName,strain in strains.items() if record[record['name']==strainName]['pop'].max()>=100}
+        self.trimmedPhages = {phageName:phage for phageName,phage in phages.items() if record[record['name']==phageName]['pop'].max()>=100}
+        print('Trimmed Strains:\t%s'% len(self.trimmedStrains))
+        print('Trimmed Phages:\t%s'% len(self.trimmedPhages))
+
+        return None
+
+
 
 
 

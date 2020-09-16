@@ -11,6 +11,7 @@ class Strain():
 
     """
     name (str): tag for this strain
+    parent (str): the id of the parent that spawned this strain
     a (float): competition coefficient (hosts)
     b (float): birth rate (hosts/timestep)
     c (float): cost of CRISPR [0,1]
@@ -29,6 +30,8 @@ class Strain():
         self.ipop = 0 # infected pop
         self.intrinsicFitness = 1 # CHANGE THIS AT SOME POINT WHEN I ADD IN RESOURCES
         self.infections = dict()
+        # self.parent = parent
+        self.descendents = 0 # the number of descendent strains from this strain
 
         self.a = a
         self.b = b
@@ -81,6 +84,8 @@ class Strain():
         # self.pop = ( r*Nh - currentInfections)/( 1 + ( N/a )**y ) 
         # based upon Beverton-Holt model
         self.pop = ( r*Nh )/( 1 + ( N/a )**y ) - currentInfections
+        # lotka-volterra predation
+        # self.pop += r*Nh*(1 - N/a) - currentInfections  
         # Extinction threshold
         if self.pop+self.ipop < 0.1: 
             self.pop = 0

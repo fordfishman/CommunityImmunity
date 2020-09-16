@@ -38,12 +38,17 @@ df2 <- read.csv(file=dfile2, header = T, row.names = 1)
 
 stepNum <- length( unique( df1$timestep ) ) # total number of timesteps in simulation
 
+InitialHost <- df1$pop[df1$name=="s1"]
+
+InitialHost <- c(InitialHost, rep(0, 2000 - length(InitialHost)))
+
+
 totalAbundance <- data.frame( # initialize secondary data frame for totals across different categories
   
   Timestep=1:stepNum, 
   Host=rep(0,stepNum), 
   Phage=rep(0,stepNum), 
-  InitialHost=df1$pop[df1$name=="s1"]
+  InitialHost=InitialHost
 )
 
 ind <- 1

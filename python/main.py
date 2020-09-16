@@ -37,6 +37,7 @@ arguments = parser.parse_args()
 out = arguments.output
 timesteps = arguments.timesteps
 single_run = arguments.single
+single_run = True
 sims = arguments.sims
 pS = arguments.pS
 m = arguments.m
@@ -313,7 +314,7 @@ def one_sim():
     print(community.summary)
 
     edges = community.globalInfectionEdges()
-    B = createNetwork(edges, community.allStrains.keys(), community.allPhages.keys())
+    B = createNetwork(edges, community.trimmedStrains.keys(), community.trimmedPhages.keys())
     plotBipartite(B)
 
     N = str(community.NList[-1]) # community size

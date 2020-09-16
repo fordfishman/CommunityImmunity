@@ -9,8 +9,8 @@ wd <- here()
 # import file
 # filename1 <- paste0(wd, "/output/1sims_a1e6_adsp1e-8_b1.2_beta100_d0.1_l0.9_m1e-7_pS1e-6/main.csv")
 # filename1 <- paste0(wd, "/output/1sims_t5000_a1e6_adsp1e-8_b1.2_beta100_d0.1_l0.9_m1e-7_pS1e-6/main.csv")
-filename1 <- paste0(wd, "/output/1sims_t2000_a1e6_adsp1e-8_b1.2_beta100_d0.1_l0.9_m1e-7_pS1e-6/main.csv")
-filename2 <- paste0(wd, "/output/1sims_t2000_a1e6_adsp1e-8_b1.2_beta100_d0.1_l0.9_m1e-7_pS1e-6/richness.csv")
+filename1 <- paste0(wd, "/output/1sims_t2000_a1e6_adsp1e-8_b1.2_beta100_c0.01_d0.1_f0_l0.9_m1e-7_pS1e-6_pop1e5_phage1e7/main.csv")
+filename2 <- paste0(wd, "/output/1sims_t2000_a1e6_adsp1e-8_b1.2_beta100_c0.01_d0.1_f0_l0.9_m1e-7_pS1e-6_pop1e5_phage1e7/richness.csv")
 
 df1 <- read.csv(filename1, header = T, row.names = 1)
 df2 <- read.csv(filename2, header = T, row.names = 1)
@@ -18,12 +18,17 @@ df2 <- gather(df2, key = organism, value=richness, HostRichness:PhageRichness)
 
 stepNum <- length( unique( df1$timestep ) ) # total number of timesteps in simulation
 
+InitialHost <- df1$pop[df1$name=="s1"]
+
+InitialHost <- c(InitialHost, rep(0, 2000 - length(InitialHost)))
+
+
 totalAbundance <- data.frame( # initialize secondary data frame for totals across different categories
   
   Timestep=1:stepNum, 
   Host=rep(0,stepNum), 
   Phage=rep(0,stepNum), 
-  InitialHost=df1$pop[df1$name=="s1"]
+  InitialHost=InitialHost
 )
 
 ind <- 1
