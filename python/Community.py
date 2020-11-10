@@ -86,17 +86,10 @@ class Community():
     """
     Main timestep function
     """
-    def timestep(self, step:int, maxtimestep=1000):
+    def timestep(self, step:int, nameGenerator):
         """
-        N (int): total community size
-        a (float): competition coefficient
-        b (float): intrinsic growth rate
-        c (float): cost of crispr
-        y (float):
-        bP (float): phage birth rate
-        adsP (float): aborption rate of phage
-        dP (float): decay rate of phage
-        pS (float): probability of spacer forming during infection per host
+        step (int): current time step
+        nameGenerator
         """
 
         # pops = deepcopy(self.populations)
@@ -145,10 +138,11 @@ class Community():
                 newVirions = lysisEvents*phage.beta
                 strain.infections[phageName] = currentInfections + newInfections - lysisEvents
 
-                newPhages += self.phageMutation(newVirions, p=m, phage=deepcopy(phage))
+                newPhages += self.phageMutation(newVirions, p=m, phage=deepcopy(phage), nameGenerator=nameGenerator)
 
                 if not strain.crispr is None: # if the strain has a crispr locus
-                    newStrains += self.newSpacer(newInfections,p=pS, strain=deepcopy(strain), phage=phage)
+                    newStrains += self.newSpacer(newInfections,p=pS, strain=deepcopy(strain), phage=deepcopy(phage), nameGenerator=nameGenerator)
+
 
             strains[strainName].timestep(N=N,l=l,step=step)
 
@@ -216,7 +210,7 @@ class Community():
         return popDict
 
     @gen.runProcess
-    def phageMutation(self, *args, p:float=0, phage:Phage=None) -> Phage:
+    def phageMutation(self, *args, nameGenerator, p:float=0, phage:Phage=None) -> Phage:
         """
         Generates a phage mutant with qualities based upon the original strain.
         This function is an argument of gen.runProcess(), and is called as many times
@@ -226,12 +220,18 @@ class Community():
 
             raise KeyError("Need to specify strain name and phage")
 
-        newGenome = phage.mutate(Mutation.SNP)
-        newName = gen.generateName(Type.PHAGE)
+        # equal prob. of a change, addition, or deletion of protospacer
+        if len(phage.protospacers) >= 1:
+            mutation = np.random.choice([Mutation.PROTOCHANGE, Mutation.PROTODELETE, Mutation.PROTOADD])
+        else:
+            mutation = Mutation.PROTOADD
+        # newGenome = phage.mutate(mutation)
+        protospacers = phage.mutate(mutation)
+        newName = nameGenerator.generateName(Type.PHAGE)
         mod = phage.fitness
         # mod = 1 
         fitness = np.random.uniform(0,1.5) * mod # some cost to mutating genome
-        # fitness = 1
+        fitness = 1
 
         newPhage = Phage(
             name=newName, 
@@ -239,7 +239,8 @@ class Community():
             beta = phage.beta, 
             d = phage.d, 
             receptor=phage.receptor,
-            genome=newGenome, 
+            # genome=newGenome, 
+            protospacers=protospacers,
             fitness = fitness,
             pop = 1.0
         )
@@ -247,7 +248,7 @@ class Community():
         return newPhage
 
     @gen.runProcess
-    def newSpacer(self, *args, p:float=0, strain:Strain=None, phage:Phage=None):
+    def newSpacer(self, *args, p:float=0, nameGenerator, strain:Strain=None, phage:Phage=None):
 
         """Adds a new strain based on another but with a new spacer"""
 
@@ -263,10 +264,11 @@ class Community():
 
         crispr = Crispr( oldSpacers ) 
 
-        spacer = crispr.makeSpacer( genome = phage.genome ) # generate a new spacer based on phage genome
+        # spacer = crispr.makeSpacer( genome = phage.genome ) # generate a new spacer based on phage genome
+        spacer = np.random.choice( list(phage.protospacers) )
         crispr.addSpacer(spacer)
             
-        newName = gen.generateName(Type.STRAIN)
+        newName = nameGenerator.generateName(Type.STRAIN)
 
         newStrain = Strain( # organism with new spacer is a new strain, one starting cell
             name=newName,

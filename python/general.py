@@ -7,6 +7,54 @@ from Enums import Type, Mutation
 import numpy as np
 import pandas as pd
 
+class NameGenerator():
+    """
+    Generators names and identifier for objects
+    ----------------
+    s - strain 
+    p - phage
+    r - receptor
+    c - community
+
+    """
+    def __init__(self, s:int=1, p:int=1, r:int=1, c:int=1):
+        self.s = s
+        self.p = p
+        self.r = r
+        self.c = c
+
+    def generateName(self, type_:Type):
+        """
+        Make names for different objects of different classes
+        """
+
+        ident = ''
+
+        if type_ == Type.STRAIN:
+
+            self.s += 1
+            ident = self.s 
+
+        elif type_ == Type.PHAGE:
+
+            self.p += 1
+            ident = self.p 
+
+        elif type_ == Type.RECEPTOR:
+
+            self.r += 1
+            ident = self.r
+
+        elif type_ == Type.COMMUNITY:
+
+            self.c += 1
+            ident = self.c
+
+        name = "%s%s" % (type_.value,ident)
+        return name
+
+
+
 def generateName(type:Type):
     """Make names for different objects of different classes"""
     # name = type.value + str(num)

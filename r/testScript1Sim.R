@@ -9,8 +9,10 @@ wd <- here()
 # import file
 # filename1 <- paste0(wd, "/output/1sims_a1e6_adsp1e-8_b1.2_beta100_d0.1_l0.9_m1e-7_pS1e-6/main.csv")
 # filename1 <- paste0(wd, "/output/1sims_t5000_a1e6_adsp1e-8_b1.2_beta100_d0.1_l0.9_m1e-7_pS1e-6/main.csv")
-filename1 <- paste0(wd, "/output/1sims_t2000_a1e6_adsp1e-8_b1.2_beta100_c0.01_d0.1_f0_l0.9_m1e-7_pS1e-6_pop1e5_phage1e7/main.csv")
-filename2 <- paste0(wd, "/output/1sims_t2000_a1e6_adsp1e-8_b1.2_beta100_c0.01_d0.1_f0_l0.9_m1e-7_pS1e-6_pop1e5_phage1e7/richness.csv")
+filename1 <- paste0(wd, "/output/1sims_t1000_a1e6_adsp1e-8_b1.2_beta100_c0.01_d0.1_f0_l0.9_m1e-7_pS1e-6_pop1e5_phage1e7/main.csv")
+filename2 <- paste0(wd, "/output/1sims_t1000_a1e6_adsp1e-8_b1.2_beta100_c0.01_d0.1_f0_l0.9_m1e-7_pS1e-6_pop1e5_phage1e7/richness.csv")
+
+
 
 df1 <- read.csv(filename1, header = T, row.names = 1)
 df2 <- read.csv(filename2, header = T, row.names = 1)
@@ -20,7 +22,7 @@ stepNum <- length( unique( df1$timestep ) ) # total number of timesteps in simul
 
 InitialHost <- df1$pop[df1$name=="s1"]
 
-InitialHost <- c(InitialHost, rep(0, 2000 - length(InitialHost)))
+InitialHost <- c(InitialHost, rep(0, stepNum - length(InitialHost)))
 
 
 totalAbundance <- data.frame( # initialize secondary data frame for totals across different categories
@@ -59,7 +61,7 @@ totalAbundance2$type <- factor(totalAbundance2$type, levels = c("Host","InitialH
 maxPop <- log10(max(df1$pop)) # max host population
 
 ## plot of the sums across groups
-ggplot(subset(totalAbundance2, type!="Variant"), aes(x=Timestep,y=abundance, group = type)) +
+ggplot(totalAbundance2, aes(x=Timestep,y=abundance, group = type)) +
   geom_line(aes(color=type)) +
   scale_y_continuous("Density",labels = math_format(10^.x), expand = c(0,0)) +
   scale_x_continuous("Timestep")+
@@ -77,8 +79,8 @@ ggplot(subset(totalAbundance2, type!="Variant"), aes(x=Timestep,y=abundance, gro
 ggplot(df1, aes(x=timestep,y=log10(pop), group = name))+
   geom_line(aes(color=type)) +
   # scale_y_continuous("Density", limits = c(1, 0.5+maxPop),labels =  math_format(10^.x), ) +
-  scale_y_continuous("Density", breaks = seq(0,10,by = 2),labels = math_format(10^.x), expand = c(0,0)) +
-  scale_x_continuous("Timestep")+
+  scale_y_continuous("Density", limits = c(0, 8),breaks = seq(0,10,by = 2),labels = math_format(10^.x), expand = c(0,0)) +
+  scale_x_continuous("Timestep",)+
   scale_color_manual("", labels = c("Initial Strain","Spacer Variant","Phage"),values = c("blue","green","red")) +
   annotation_logticks(sides = "l") +
   theme(panel.grid.major = element_blank(),
@@ -118,6 +120,8 @@ ggplot(totalAbundance, aes(x=Host_log,y=Phage_log))+
         axis.ticks.length = unit(5,"pt"),)
 
 # ratio of phage to total host over time
+# phase plot
+# try adding time as a color?
 ggplot(totalAbundance, aes(x=1:stepNum,y=(Phage/Host)))+
   geom_line() +  # scale_y_continuous("Density", limits = c(1, 0.5+maxPop),labels =  math_format(10^.x), ) +
   scale_y_continuous("Phage/Host", expand = c(0,0)) +

@@ -137,7 +137,9 @@ def initialize():
         adsp = adsp,beta = beta, d = d,
         receptor = receptor1,
         pop = phageinit,
-        genomeLength=1000
+        # genomeLength=1000,
+        numProto=4
+
     )
 
     # spacer = strain2.crispr.makeSpacer("AGTAGTAGTAGTAGTAGTAGTAGTAGTAGTAGTAGTAGTAGTAGTAGTAGT")
@@ -217,8 +219,10 @@ def sim_proc(community, timesteps):
 
     timestep = community.timestep
     
+    nameGenerator = gen.NameGenerator()
+
     for i in range(timesteps):
-        timestep(i)
+        timestep(i, nameGenerator=nameGenerator)
         pRichness.append( len( community.phagesPopDict() ) )
         maxPRich = max(pRichness)
         sRichness.append( community.richness() )
@@ -245,6 +249,7 @@ def one_sim():
     """
     outputMain = out + "/main.csv"
     outputRichness = out + "/richness.csv"
+    outputNetwork = out + "/network.png"
 
     community = initialize()
     
@@ -273,11 +278,13 @@ def one_sim():
 
     timestep = community.timestep
 
+    nameGenerator = gen.NameGenerator()
+
     print('Running Simulation...')
 
     for i in tqdm(range(timesteps)): # run for # of timesteps
         
-        timestep(i)
+        timestep(i, nameGenerator=nameGenerator)
         pRichness.append( len( community.phagesPopDict() ) )
         maxPRich = max(pRichness)
         sRichness.append( community.richness() )
@@ -310,12 +317,13 @@ def one_sim():
     community.summary["phage"] = community.PList[-1]
     community.summary["immune"] = community.IList[-1]
     community.summary["susceptible"] = community.SList[-1]
-
+    
+    print('Initial conditions:')
     print(community.summary)
 
     edges = community.globalInfectionEdges()
     B = createNetwork(edges, community.trimmedStrains.keys(), community.trimmedPhages.keys())
-    plotBipartite(B)
+    plotBipartite(B, outputNetwork)
 
     N = str(community.NList[-1]) # community size
     P = str(community.PList[-1])
@@ -366,8 +374,12 @@ def one_sim():
 
     df1.to_csv(outputMain)
     df2.to_csv(outputRichness)
-    # for phage in community.phages.values:
-    #     print(phage.genome)
+
+    print('Output files:')
+    print(outputMain)
+    print(outputNetwork)
+    print(outputRichness)
+
     return None
 
 def multi_sim(sims):

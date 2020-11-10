@@ -106,10 +106,10 @@ class Strain():
     """
     Other functions
     """
-    def addSpacer(self,spacer:str):
+    def addSpacer(self,protospacer:str):
         if not self.crispr is None:
 
-            self.crispr.addSpacer(spacer)
+            self.crispr.addSpacer(protospacer)
         return None
         
 
@@ -119,21 +119,24 @@ class Strain():
         return receptor in self.phReceptors and self.phReceptors[receptor].isExpressed  
 
 
-    def isImmune(self, phageGenome:str):
+    def isImmune(self, protospacers:set):
         """Does the strain have CRISPR resistance"""
         isImmune = False
 
         if self.crispr is None:
             isImmune = False
         else:
+            for protospacer in protospacers:
 
-            isImmune = self.crispr.hasSpacer( genome = phageGenome )
+                if  self.crispr.hasSpacer( protospacer ):
+                    isImmune = True
+                    break
 
         return isImmune
 
     def isInfectable(self, phage:Phage):
         """Can this phage infect this strain"""
-        return self.isSusceptible(phage.receptor.name) and not self.isImmune(phage.genome)
+        return self.isSusceptible(phage.receptor.name) and not self.isImmune(phage.protospacers)
 
     def addReceptor(self, receptor:PhageReceptor.PhageReceptor):
         """Add a receptor to strain"""

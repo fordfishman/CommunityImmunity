@@ -40,8 +40,7 @@ stepNum <- length( unique( df1$timestep ) ) # total number of timesteps in simul
 
 InitialHost <- df1$pop[df1$name=="s1"]
 
-InitialHost <- c(InitialHost, rep(0, 2000 - length(InitialHost)))
-
+InitialHost <- c(InitialHost, rep(0, stepNum - length(InitialHost)))
 
 totalAbundance <- data.frame( # initialize secondary data frame for totals across different categories
   

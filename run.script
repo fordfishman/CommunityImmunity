@@ -9,16 +9,12 @@
 
 
 # Set pathing
-# sourcepath=/geode2/home/u030/ffishman/Carbonate/thindrives/fordfishman/GitHub/CommunityImmunity
 cwd=$(pwd)
 
 sourcepath=$cwd/GitHub/CommunityImmunity
 
 python=$sourcepath/python
 r=$sourcepath/r
-
-
-# settings=a1e7_b1.5_l0.9_pS1e-6
 
 sims=1000
 a=1e7
