@@ -265,8 +265,11 @@ class Community():
         crispr = Crispr( oldSpacers ) 
 
         # spacer = crispr.makeSpacer( genome = phage.genome ) # generate a new spacer based on phage genome
-        spacer = np.random.choice( list(phage.protospacers) )
-        crispr.addSpacer(spacer)
+
+        if len(phage.protospacers) !=0:
+
+            spacer = np.random.choice( list(phage.protospacers) )
+            crispr.addSpacer(spacer)
             
         newName = nameGenerator.generateName(Type.STRAIN)
 
