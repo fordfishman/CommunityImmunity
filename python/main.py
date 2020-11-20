@@ -8,7 +8,7 @@ Modules
 import numpy as np; import pandas as pd; import sys
 import argparse
 import Strain; import Population; import Community; import Phage; import PhageReceptor; import Crispr
-import general as gen; from network import createNetwork, plotBipartite
+import general as gen; from network import createNetwork, plotBipartite, adjacencyMatrix
 import timeit; import multiprocessing as mp; from functools import partial
 from tqdm import tqdm
 
@@ -250,6 +250,7 @@ def one_sim():
     outputMain = out + "/main.csv"
     outputRichness = out + "/richness.csv"
     outputNetwork = out + "/network.png"
+    outputAdjacency = out + "/adjacency.csv"
 
     community = initialize()
     
@@ -324,6 +325,8 @@ def one_sim():
     edges = community.globalInfectionEdges()
     B = createNetwork(edges, community.trimmedStrains.keys(), community.trimmedPhages.keys())
     plotBipartite(B, outputNetwork)
+    A = adjacencyMatrix(B)
+    A.to_csv(outputAdjacency)
 
     N = str(community.NList[-1]) # community size
     P = str(community.PList[-1])
@@ -347,18 +350,7 @@ def one_sim():
     # print("max: %s\tmean: %s" % (max(community.otherTimes), stat.mean(community.otherTimes)))
     # print()
     # print("max immune: %s"%(max(community.IList)))
-    # df1 = pd.DataFrame( 
-    #     list( 
-    #         zip(
-    #             community.NList, 
-    #             community.PList,
-    #             community.IList,
-    #             community.SList, 
-    #             range(1,timesteps+1), 
-    #             ) 
-    #         ),
-    #     columns= ['host','phage','immune','susceptible','time'],
-    #     )
+
     df1 = community.fullRecord()
     # # cols = [ "strain"+str(i) for i in range(0,len(cRichness)) ]
     df2 = pd.DataFrame( 
@@ -379,6 +371,7 @@ def one_sim():
     print(outputMain)
     print(outputNetwork)
     print(outputRichness)
+    print(outputAdjacency)
 
     return None
 

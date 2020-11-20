@@ -10,7 +10,7 @@ r=$sourcepath/r
 # output=$sourcepath/output/latency_test/m105_pS106_aH_107_f1
 
 sims=1
-t=1000
+t=5000
 a=1e6
 c=0.01
 f=0

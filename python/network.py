@@ -3,7 +3,7 @@
 
 import networkx as nx
 from networkx.algorithms import bipartite
-import numpy as np
+import numpy as np; import pandas as pd
 from scipy.sparse import csr_matrix
 import matplotlib as mpl 
 import matplotlib.pyplot as plt
@@ -35,6 +35,12 @@ def bipartNodes(graph):
     y = set(graph) - x
     return (x, y)
 
+def adjacencyMatrix(graph):
+    x, y = bipartNodes(graph)
+    A = nx.bipartite.biadjacency_matrix(graph, row_order=x, column_order=y)
+    df = pd.DataFrame.sparse.from_spmatrix(A, index=x, columns = y)
+    return df
+
 def plotBipartite(B:nx.Graph, path)->None:
     """
     Plots a bipartite graph using matplotlib
@@ -60,10 +66,12 @@ def nestedness(G):
     adapted from R vegan NODF sourcecode: https://rdrr.io/cran/vegan/src/R/nestednodf.R
     """
 
+    # Create adjacency matrix
     x, y = bipartNodes(G)
     A = nx.bipartite.biadjacency_matrix(G, row_order=x, column_order=y)
     m, n = A.shape
 
+    # Sum rows and columns and reorder by sums
     rowsum = A.sum(1)
     colsum = A.sum(0).reshape(m, 1) 
 
@@ -79,13 +87,13 @@ def nestedness(G):
     rowsum = np.sort(rowsum_np)[::-1]
     colsum = np.sort(colsum_np)[::-1] 
 
-    print(rowsum)
-
     A = csr_matrix(B)
     print(A.toarray())
     nrowpairs = list()
     ncolpairs = list()
     denom = (n*(n-1)/2) + (m*(m-1)/2) 
+
+    # calculate Nrow
 
     for i in range(m-1):
 
@@ -108,6 +116,8 @@ def nestedness(G):
                 N = np.sum((row1 + row2) == 2)/rowsum2
                 nrowpairs.append(N)
 
+    # calculate Ncol
+
     for i in range(n):
 
         col1 = A[:,i].toarray()
@@ -128,14 +138,13 @@ def nestedness(G):
     Npair = np.array([*ncolpairs, *nrowpairs]) 
 
     nodf = np.sum(Npair)*100/denom
-    # print(ncolpairs)
-    # print(nrowpairs)
 
     return nodf
-    # return None
-
 
 def modularity(G):
+    """
+
+    """
 
     x, y = bipartNodes(G)
     A = nx.bipartite.biadjacency_matrix(G, row_order=x, column_order=y)
@@ -158,36 +167,9 @@ B = createNetwork(e, a, b)
 # print(x)
 # print(y)
 # nestedness(B)
-print(nestedness(B))
+# print(nestedness(B))
+modularity(B)
 plotBipartite(B, '/mnt/c/Users/fordf/Downloads/network.png')
 
-# print(rowsum.reshape(5,1))
 
-
-# G = nx.Graph()
-
-# G.add_node(1)
-
-# G.add_nodes_from( [2,3] )
-
-# G.add_nodes_from([
-#     (4, {'color': 'red'}),
-#     (5, {'color': 'green'}),
-# ])
-
-# G.add_edge(1,2)
-
-# e = (2,3)
-
-# G.add_edge(*e)  
-
-# G.add_edges_from( [ (1,2), (1,3) ] )
-
-# G.add_node('spam')
-
-# # print(G.nodes)
-
-# H = nx.DiGraph(G)
-
-# H = nx.petersen_graph()
 

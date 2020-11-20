@@ -49,8 +49,11 @@ class NameGenerator():
 
             self.c += 1
             ident = self.c
+        
+        buffer_len = 3 - len(str(ident)) # add zero buffers to names
+        buffer = "".join(["0" for i in range(buffer_len)])
 
-        name = "%s%s" % (type_.value,ident)
+        name = "%s%s%s" % (type_.value,buffer,ident)
         return name
 
 
