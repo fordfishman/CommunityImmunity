@@ -28,11 +28,8 @@ class Phage():
         self.pop = pop
         self.receptor = receptor
         self.fitness = fitness
-        # self.__strains = set()
-        # self.__targetPop = targetPop
         self.record = None
         self.type = 'phage'
-
         self.adsp = adsp
         self.beta = beta
         self.d = d
@@ -53,13 +50,6 @@ class Phage():
                 self.protospacers.add( gen.generateName(Type.PROTO) )
             
 
-        # if not genome is None: 
-        #     self.genome = genome
-
-        # else: # Generates a pseudo-genome for the phage
-        #     # Essentially provides it with pseudo-spacers
-        #     self.genome = "".join(np.random.choice(NUCLEOTIDES, size=genomeLength, replace=True))
-
 ##########################################################################################################
 
     """
@@ -72,7 +62,6 @@ class Phage():
         """
 
         i = len(self.record) # how long this phage has been around
-        # adsp = self.adsp
         beta = self.beta
         d = self.d
 
@@ -80,11 +69,7 @@ class Phage():
         adsorbed = self.adsorbed
         lysisEvents = self.lysisEvents
         
-        # self.__pop += adsp*(beta-1)*Ns*Np*self.__fitness - d*Np
-        # self.pop += l*beta*inf - adsp*Np*Ns - d*Np
         self.pop += beta*lysisEvents - adsorbed - d*Np
-        # if beta*inf < 1 and self.pop < 1: self.pop = 0
-        # if self.pop < 1: self.pop = 0
         
         # record data from this timestep
         # columns: "timestep", "name", "pop", "dpop", "dpop_pop","type", "spacers"
@@ -141,33 +126,6 @@ class Phage():
         protospacers.discard(protospacer)
 
         return protospacers
-
-    # @mutate.register(Mutation.SNP)
-    # def _(self, mutation) -> str:
-    #     # print(self.__genome)
-    #     nt = np.random.choice(NUCLEOTIDES) # the new nucleotide
-
-    #     gLength = len(self.genome) # genome length
-    #     i = np.random.choice( range(0, gLength) )
-    #     # make genome into a list to change position
-    #     genomeList = list(self.genome) 
-    #     genomeList[i] = nt
-    #     newGenome = "".join(genomeList)
-    #     # print(newGenome)
-    #     return newGenome
-
-    # @mutate.register(Mutation.DELETION)
-    # def _(self, mutation) -> str:
-        
-    #     gLength = len(self.genome) # genome length
-    #     i = np.random.choice( range(0, gLength) )
-    #     # make genome into a list to delete position
-    #     genomeList = list(self.genome)
-    #     genomeList.pop(i)
-    #     newGenome = "".join(genomeList)
-
-    #     return newGenome
-
 
 
 ##########################################################################################################

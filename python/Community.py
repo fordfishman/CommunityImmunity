@@ -22,7 +22,6 @@ class Community():
         self.pS = pS
         self.m = m
         self.l = l
-        # self.populations = dict()
         self.strains = strains
         self.phages = phages
 
@@ -133,7 +132,6 @@ class Community():
                 currentInfections = strain.infections.get(phageName, 0)
                 phage.adsorbed += newInfections + failedInfections # phage keeps tracked of adsorbed members
                 lysisEvents = currentInfections * l # how many infections are now lysing?
-                # lysisEvents = np.random.binomial(n=currentInfections,p=l) 
                 phage.lysisEvents += lysisEvents
                 newVirions = lysisEvents*phage.beta
                 strain.infections[phageName] = currentInfections + newInfections - lysisEvents
@@ -200,6 +198,31 @@ class Community():
     Other functions
     """
 
+    def initStrains(self, strains):
+        """
+        Initialize arrays with attributes
+        """
+
+        self.strainIDS = list()
+        self.a = np.array([])
+        self.b = np.array([])
+        self.c = np.array([])
+        self.f = np.array([])
+        self.N = np.array([])
+        self.I = np.array([])
+
+        for strain in strains:
+
+            self.strainIDS.append(strain.name)
+            np.append(self.a, strain.a)
+            np.append(self.b, strain.b)
+            np.append(self.c, strain.c)
+            np.append(self.f, strain.f)
+            np.append(self.N, strain.pop)
+            np.append(self.I, strain.ipop)
+
+        return None
+
     def phagesPopDict(self):
         """
         returns dictionary of phage name to phage pop (str:float)
@@ -264,8 +287,6 @@ class Community():
 
         crispr = Crispr( oldSpacers ) 
 
-        # spacer = crispr.makeSpacer( genome = phage.genome ) # generate a new spacer based on phage genome
-
         if len(phage.protospacers) !=0:
 
             spacer = np.random.choice( list(phage.protospacers) )
@@ -300,15 +321,12 @@ class Community():
 
         strainNames, phageNames = list(strains.keys()), list(phages.keys())
 
-        # df = pd.DataFrame(None, columns=phageNames, index=strainNames) # initialize blank dataframe
 
         edges = list()
 
         for strainName in strainNames:
 
             strain = strains[strainName]
-
-            # df.loc[strainName] = [ strain.isInfectable( phages[phageName] ) for phageName in phageNames ]
 
             edges += [ (strainName, phageName) for phageName in phageNames if strain.isInfectable( phages[phageName] )]
 
@@ -339,12 +357,9 @@ class Community():
     
     def __updateComSize(self):
         """Re-total community size across all populations"""
-        # populations = self.populations
+
         comSize = 0
 
-        # for pop in populations.values():
-        #     comSize += pop.popSize
-        #     self.strains.update( pop.strains )
         for strain in self.strains.values():
             comSize += strain.pop
 
