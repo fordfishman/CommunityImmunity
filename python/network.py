@@ -30,6 +30,18 @@ def createNetwork(edges:list, strainNames:list, phageNames:list):
 
     return B
 
+def addToNetwork(B, edges:list, strainNames:list=None, phageNames:list=None):
+
+    if not strainNames is None:
+        B.add_nodes_from( strainNames, bipartite=0 ) 
+    
+    if not phageNames is None:
+        B.add_nodes_from( phageNames, bipartite=1 )
+
+    B.add_edges_from(edges)
+
+    return B
+
 def bipartNodes(graph):
     x = {n for n,d in graph.nodes(data=True) if d["bipartite"]==0}
     y = set(graph) - x
@@ -155,21 +167,23 @@ a = [1,2,3,4,5]
 b = ['a','b','c','d','e']
 # e = [('a',1), ('d', 4), ('c',2), ('b',5), ('e',3)]
 e = [
-    ('a',1), 
-    ('b',1), ('b',2), 
-    ('c',1), ('c',2), ('c',3), 
-    ('d',1), ('d',2), ('d',3), ('d', 4),
+    # ('a',1), 
+    # ('b',1), ('b',2), 
+    # ('c',1), ('c',2), ('c',3), 
+    # ('d',1), ('d',2), ('d',3), ('d', 4),
     ('e',1), ('e',2),('e',3), ('e', 4), ('e', 5)
 ]
 B = createNetwork(e, a, b)
+addToNetwork(B, [('a',6)],[6])
+# print(adjacencyMatrix(B))
 # x = {n for n,d in B.nodes(data=True) if d["bipartite"]==0}
 # y = set(B) - x
 # print(x)
 # print(y)
 # nestedness(B)
 # print(nestedness(B))
-modularity(B)
-plotBipartite(B, '/mnt/c/Users/fordf/Downloads/network.png')
+# modularity(B)
+# plotBipartite(B, '/mnt/c/Users/fordf/Downloads/network.png')
 
 
 

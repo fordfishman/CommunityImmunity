@@ -13,13 +13,15 @@ class NameGenerator():
     ----------------
     s - strain 
     p - phage
+    proto - protospacer
     r - receptor
     c - community
 
     """
-    def __init__(self, s:int=1, p:int=1, r:int=1, c:int=1):
+    def __init__(self, s:int=1, p:int=1, proto:int=1, r:int=1, c:int=1):
         self.s = s
         self.p = p
+        self.proto = proto
         self.r = r
         self.c = c
 
@@ -38,7 +40,12 @@ class NameGenerator():
         elif type_ == Type.PHAGE:
 
             self.p += 1
-            ident = self.p 
+            ident = self.p
+
+        elif type_ == Type.PROTO:
+
+            self.proto += 1
+            return self.proto # just want numbers for proto spacers
 
         elif type_ == Type.RECEPTOR:
 
@@ -58,14 +65,14 @@ class NameGenerator():
 
 
 
-def generateName(type:Type):
-    """Make names for different objects of different classes"""
-    # name = type.value + str(num)
-    nums = range(0,10)
-    idList = np.random.choice(nums, size=10, replace=True)
-    nameEnd = "".join( map(str,idList) )
-    name = "%s%s" % (type.value,nameEnd)
-    return name
+# def generateName(type:Type):
+#     """Make names for different objects of different classes"""
+#     # name = type.value + str(num)
+#     nums = range(0,10)
+#     idList = np.random.choice(nums, size=10, replace=True)
+#     nameEnd = "".join( map(str,idList) )
+#     name = "%s%s" % (type.value,nameEnd)
+#     return name
 
 def initRecord():
     """

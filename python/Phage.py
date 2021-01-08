@@ -22,7 +22,7 @@ class Phage():
     # strains (set(str)): set of strains this phage can infect
     """
 
-    def __init__(self, name:str, adsp:float, beta:float, d:float, receptor:PhageReceptor, genome:str = None, protospacers:set=None, numProto=0,genomeLength:int = 100, pop:float = 1, fitness:float = 1):
+    def __init__(self, name:str, adsp:float, beta:float, d:float, receptor:PhageReceptor, protospacers:set, genome:str = None,genomeLength:int = 100, pop:float = 1, fitness:float = 1):
 
         self.name = name
         self.pop = pop
@@ -39,15 +39,15 @@ class Phage():
 
         self.record = gen.initRecord()
 
-        if not protospacers is None:
-            self.protospacers = protospacers
+        # if not protospacers is None:
+        self.protospacers = protospacers
 
-        else:
-            self.protospacers = set()
+        # else:
+        #     self.protospacers = set()
 
-            for i in range(numProto):
+        #     for i in range(numProto):
 
-                self.protospacers.add( gen.generateName(Type.PROTO) )
+        #         self.protospacers.add( gen.generateName(Type.PROTO) )
             
 
 ##########################################################################################################
@@ -92,26 +92,25 @@ class Phage():
         
 
     @mutate.register(Mutation.PROTOCHANGE)
-    def _(self, mutation) -> set:
+    def _(self, mutation, protoName=None) -> set:
         """
         Alter a protospacer currently in the strain
         """
         protospacers = deepcopy(self.protospacers)
         protospacer = np.random.choice(list(protospacers))
         protospacers.discard(protospacer)
-        protospacers.add( gen.generateName(Type.PROTO) )
+        protospacers.add(protoName)
 
         return protospacers
 
 
     @mutate.register(Mutation.PROTOADD)
-    def _(self, mutation) -> set:
-        
+    def _(self, mutation, protoName=None) -> set:
         """
         Add a new protospacer to genome
         """
         protospacers = deepcopy(self.protospacers)
-        protospacers.add( gen.generateName(Type.PROTO) )
+        protospacers.add(protoName)
 
         return protospacers
 

@@ -18,7 +18,7 @@ Setting up arguments
 parser = argparse.ArgumentParser()
 parser.add_argument('-o','--output', default='comim', type=str, help="Desired name of output path")
 parser.add_argument('-t','--timesteps', default=2000, type=int, help="Number of timesteps in each simulation")
-parser.add_argument('-s','--single', default=False, type=bool, help='Whether or not to run the program in single simulation mode')
+parser.add_argument('-s','--single', default=True, type=bool, help='Whether or not to run the program in single simulation mode')
 parser.add_argument('-S','--sims', default=100, type=int, help="Number of simulations to run (--single must be False)")
 parser.add_argument('-pS', default=None, type=float, help="probability of spacer formation per infection")
 parser.add_argument('-m', default=None, type=float, help="phage mutation rate per nt")
@@ -37,7 +37,7 @@ arguments = parser.parse_args()
 out = arguments.output
 timesteps = arguments.timesteps
 single_run = arguments.single
-single_run = True
+# single_run = True
 sims = arguments.sims
 pS = arguments.pS
 m = arguments.m
@@ -73,6 +73,20 @@ y = 1 # rate of density dependence setting in around a, y = 1 makes classic beve
 # m = 10**-6 # phage mutation rate per nt
 # l = 0.5 # proportion of infections that lead to bursting each timestep
 
+timesteps=5000
+a=1e6
+c=0.01
+f=0
+l=0.9
+m=1e-6
+b=1.2
+pS=1e-6
+d=0.1
+adsp=1e-8
+beta=100
+popinit=1e5
+phageinit=1e7
+
 """
 Functions called by main
 """
@@ -82,6 +96,8 @@ def initialize():
     Set up initial strains and phages
     Return: com (Community)
     """
+    from Enums import Type
+
     from numpy.random import uniform as uni, randint
     params = {"pS", "b", "a", "c", "f","beta", "adsp", "d", "m", "l", "popinit", "phageinit"}
     param_dict = dict() # will contain parameters already specified at the command line
@@ -113,7 +129,7 @@ def initialize():
 
 
     strain1 = Strain.Strain(
-        name = "s1",
+        name = "s001",
         a=a,b=b,c=c,y=y,f=f,
         crispr = crispr0,
         phReceptors = {
@@ -132,13 +148,21 @@ def initialize():
     #     pop = popinit/100
     # )
 
+    nameGenerator = gen.NameGenerator()
+
+    protospacers = set()
+
+    for i in range(4):
+
+        protospacers.add( nameGenerator.generateName(Type.PROTO))
+
     phage1 = Phage.Phage(
-        name = "p1",
+        name = "p001",
         adsp = adsp,beta = beta, d = d,
         receptor = receptor1,
         pop = phageinit,
-        # genomeLength=1000,
-        numProto=4
+        protospacers = protospacers
+        # numProto=4
 
     )
 
@@ -155,14 +179,15 @@ def initialize():
     # )
 
     com = Community.Community(
-        pS=pS,m=m,l=l,
+        c=c,pS=pS,m=m,l=l,
         strains = {
             strain1.name: strain1,
             # strain2.name: strain2
         },
         phages = {
             phage1.name: phage1
-        }
+        },
+        nameGenerator=nameGenerator
     )
 
     com.summary = pd.Series(
@@ -234,7 +259,7 @@ def sim_proc(community, timesteps):
 
     community.summary["richness"] = maxSRich
     community.summary["phageRichness"] = maxPRich 
-    community.summary["pop"] = community.N
+    community.summary["pop"] = community.N_tot
     community.summary["phage"] = community.PList[-1]
     community.summary["immune"] = community.IList[-1]
     community.summary["susceptible"] = community.SList[-1]
@@ -254,38 +279,34 @@ def one_sim():
 
     community = initialize()
     
-    # params = {"pS", "b", "a", "c", "beta", "adsp", "d", "m", "l", "popinit", "phageinit"}
     print("pS:\t%s"%community.pS)
-    print("b:\t%s"%community.strains["s1"].b)
-    print("a:\t%s"%community.strains["s1"].a)
-    print("c:\t%s"%community.strains["s1"].c)
-    print("f:\t%s"%community.strains["s1"].f)
+    print("b:\t%s"%community.strains["s001"].b)
+    print("a:\t%s"%community.strains["s001"].a)
+    print("c:\t%s"%community.strains["s001"].c)
+    print("f:\t%s"%community.strains["s001"].f)
     print("beta:\t%s"%beta)
     print("adsp:\t%s"%adsp)
     print("d:\t%s"%d)
     print("m:\t%s"%community.m)
     print("l:\t%s"%community.l)
     print()
-    print("popint:\t%s"%community.N)
+    print("popint:\t%s"%community.N_tot)
     print("phageinit:\t%s"%community.PList[0])
 
-
-    N = community.N # community size
+    N = community.N_tot # community size
     pRichness = [len( community.phagesPopDict() )] # phage richness over time
     maxPRich = pRichness[0]
     sRichness = [len( community.strains )] # strain richness over time
     maxSRich = sRichness[0]
     cRichness = list() # spacer richness over time (list of lists)
 
-    timestep = community.timestep
-
-    nameGenerator = gen.NameGenerator()
+    timestep = community.timestep2
 
     print('Running Simulation...')
 
     for i in tqdm(range(timesteps)): # run for # of timesteps
         
-        timestep(i, nameGenerator=nameGenerator)
+        timestep(i)
         pRichness.append( len( community.phagesPopDict() ) )
         maxPRich = max(pRichness)
         sRichness.append( community.richness() )
@@ -314,7 +335,7 @@ def one_sim():
 
         #     community.strains["s2"] = s2
 
-    community.summary["pop"] = community.N
+    community.summary["pop"] = community.N_tot
     community.summary["phage"] = community.PList[-1]
     community.summary["immune"] = community.IList[-1]
     community.summary["susceptible"] = community.SList[-1]
@@ -322,11 +343,11 @@ def one_sim():
     print('Initial conditions:')
     print(community.summary)
 
-    edges = community.globalInfectionEdges()
-    B = createNetwork(edges, community.trimmedStrains.keys(), community.trimmedPhages.keys())
-    plotBipartite(B, outputNetwork)
-    A = adjacencyMatrix(B)
-    A.to_csv(outputAdjacency)
+    # edges = community.globalInfectionEdges()
+    # B = createNetwork(edges, community.trimmedStrains.keys(), community.trimmedPhages.keys())
+    # plotBipartite(B, outputNetwork)
+    # A = adjacencyMatrix(B)
+    # A.to_csv(outputAdjacency)
 
     N = str(community.NList[-1]) # community size
     P = str(community.PList[-1])
@@ -351,7 +372,19 @@ def one_sim():
     # print()
     # print("max immune: %s"%(max(community.IList)))
 
-    df1 = community.fullRecord()
+    # df1 = community.fullRecord()
+    df1 = pd.DataFrame(
+        list(
+            zip(
+                community.NList,
+                community.PList,
+                community.SList,
+                community.IList,
+                range(1,timesteps+1)
+            )
+        ),
+        columns = ['N','P','S','I','t'],
+    )
     # # cols = [ "strain"+str(i) for i in range(0,len(cRichness)) ]
     df2 = pd.DataFrame( 
         list( 
@@ -369,9 +402,9 @@ def one_sim():
 
     print('Output files:')
     print(outputMain)
-    print(outputNetwork)
+    # print(outputNetwork)
     print(outputRichness)
-    print(outputAdjacency)
+    # print(outputAdjacency)
 
     return None
 
