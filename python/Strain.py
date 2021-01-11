@@ -40,6 +40,13 @@ class Strain():
         self.f = f
 
         self.record = gen.initRecord()
+
+        if self.name == 's001':
+            self.strainType = 'initial'
+        
+        else:
+            self.strainType = 'novel'
+        
         
         if not phReceptors is None:
             for receptorName in phReceptors: # for all receptors in a strain
@@ -74,7 +81,7 @@ class Strain():
 
         if not self.hasCost(): # set cost to 0 if strain does not have CRISPR-associated cost
             c = 0
-        if self.name == 's1':
+        if self.name == 's001':
             strainType = 'initial'
         
         # fitness 
@@ -106,6 +113,9 @@ class Strain():
     """
     Other functions
     """
+    def numSpacers(self):
+        return len(self.crispr)
+
     def addSpacer(self,protospacer:str):
         if not self.crispr is None:
 

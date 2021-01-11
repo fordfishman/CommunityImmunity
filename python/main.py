@@ -162,7 +162,6 @@ def initialize():
         receptor = receptor1,
         pop = phageinit,
         protospacers = protospacers
-        # numProto=4
 
     )
 
@@ -248,7 +247,7 @@ def sim_proc(community, timesteps):
 
     for i in range(timesteps):
         timestep(i, nameGenerator=nameGenerator)
-        pRichness.append( len( community.phagesPopDict() ) )
+        pRichness.append( community.phagesPopDict() )
         maxPRich = max(pRichness)
         sRichness.append( community.richness() )
         maxSRich = max(sRichness)
@@ -294,9 +293,9 @@ def one_sim():
     print("phageinit:\t%s"%community.PList[0])
 
     N = community.N_tot # community size
-    pRichness = [len( community.phagesPopDict() )] # phage richness over time
+    pRichness = [ community.phageRichness() ] # phage richness over time
     maxPRich = pRichness[0]
-    sRichness = [len( community.strains )] # strain richness over time
+    sRichness = [ community.richness() ] # strain richness over time
     maxSRich = sRichness[0]
     cRichness = list() # spacer richness over time (list of lists)
 
@@ -307,7 +306,7 @@ def one_sim():
     for i in tqdm(range(timesteps)): # run for # of timesteps
         
         timestep(i)
-        pRichness.append( len( community.phagesPopDict() ) )
+        pRichness.append( community.phageRichness() )
         maxPRich = max(pRichness)
         sRichness.append( community.richness() )
         maxSRich = max(sRichness)

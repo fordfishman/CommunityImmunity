@@ -2,7 +2,7 @@
 
 from copy import copy, deepcopy
 import timeit
-from Phage import Phage; from Population import Population
+from Phage import Phage
 from Strain import Strain; from Crispr import Crispr
 import general as gen; from Enums import Mutation, Type
 from network import createNetwork, adjacencyMatrix, addToNetwork
@@ -39,6 +39,10 @@ class Community():
         self.IList = list() # spacer variants
         self.SList = list() # initial host variant
 
+        # keep track of all phages and all strains
+        self.allN = list()
+        self.allP = list()
+
         self.__updateComSize()
         self.strainTimes = list()
         self.phageTimes = list()
@@ -56,7 +60,10 @@ class Community():
 
     def richness(self)->int:
         """Returns strain richness for entire community"""
-        return len(self.strains)
+        return len(self.N.reshape(-1))
+    
+    def phageRichness(self)->int:
+        return len(self.P.reshape(-1))
 
     def spacerRichness(self)->list:
         """how many unique spacers are in this community?"""
@@ -70,6 +77,84 @@ class Community():
             uniqueSpacers.update(spacers)
 
         return len(uniqueSpacers)
+
+    def fullDF(self):
+        """ 
+        """
+        # strains
+        maxStrains = len(self.N.reshape(-1))
+        Ns = self.allN
+
+        timesteps = len(Ns)
+
+        strains_mat = np.zeros([maxStrains,timesteps])
+
+        for i,N in enumerate(Ns):
+            zeros = np.zeros_like(N) 
+            full_N = np.append(N, zeros)
+            strains_mat[:,i]
+
+        df = pd.DataFrame(None)
+
+        for j in range(maxStrains):
+
+            pop = strains_mat[j,:]
+            dpop = np.ediff1d(pop, to_begin=0)
+            name = self.strainIDS[j]
+            strain = self.strains[name]
+            Type = strain.strainType
+            spacers = strain.numSpacers()
+
+            df_j = pd.DataFrame(
+                {
+                    'timestep': list( range(timesteps) ),
+                    'name': self.strainIDS[j],
+                    'pop': pop,
+                    'dpop': dpop,
+                    'dpop_pop': dpop/pop,
+                    'type':Type,
+                    'spacers': spacers
+                }
+            )
+
+            df = df.append(df_j, ignore_index=True)
+
+        # phage
+        maxPhages = len(self.P.reshape(-1))
+        Ps = self.allP
+
+        phages_mat = np.zeros([maxPhages,timesteps])
+
+        for i,P in enumerate(Ps):
+            zeros = np.zeros_like(P) 
+            full_P = np.append(P, zeros)
+            phages_mat[:,i]
+
+        for j in range(maxPhages):
+
+            pop = phages_mat[j,:]
+            dpop = np.ediff1d(pop, to_begin=0)
+            name = self.phageIDS[j]
+            phage = self.phages[name]
+            Type = 'phage'
+            spacers = phage.numSpacers()
+
+            df_j = pd.DataFrame(
+                {
+                    'timestep': list( range(timesteps) ),
+                    'name': self.phageIDS[j],
+                    'pop': pop,
+                    'dpop': dpop,
+                    'dpop_pop': dpop/pop,
+                    'type':Type,
+                    'spacers': spacers
+                }
+            )
+
+            df = df.append(df_j, ignore_index=True)
+
+
+        return None
 
     def fullRecord(self):
         """Record of all strain and phage data from the beginning to the current step"""
@@ -90,111 +175,12 @@ class Community():
     """
     Main timestep function
     """
-    # def timestep(self, step:int):
-    #     """
-    #     step (int): current time step
-
-    #     """
-    #     phages = deepcopy(self.phages)
-    #     strains = deepcopy(self.strains)
-    #     pS = self.pS
-    #     m = self.m
-    #     l = self.l
-    #     N = self.N_tot # total cells in system
-    #     totalImmune = 0
-    #     totalSusceptible = 0
-    #     newPhages = list()
-    #     newStrains = list()
-    #     # keep track of each member going extinct
-    #     extinctPhageNames = set()
-    #     extinctStrainNames = set()
-
-    #     for strainName, strain in strains.items():
-
-    #         if strain.pop == 0 and strain.ipop == 0:
-    #             extinctStrainNames.add(strainName)
-    #             continue
-
-    #         if strain.hasCost():
-    #             totalImmune += strains[strainName].pop
-    #         else:
-    #             totalSusceptible += strains[strainName].pop
-
-    #         for phageName,phage in phages.items():
-
-    #             if strain.isInfectable(phage): # can phage infect this host?
-    #                 newInfections = phage.pop*phage.adsp*strain.pop
-    #                 failedInfections = 0
-
-    #             else:
-    #                 # new infections due to CRISPR failure rate
-    #                 newInfections = phage.pop*phage.adsp*strain.pop*strain.f
-    #                 # failed infections remove phage from system
-    #                 failedInfections = phage.pop*phage.adsp*strain.pop*(1-strain.f)
-
-    #             currentInfections = strain.infections.get(phageName, 0)
-    #             phage.adsorbed += newInfections + failedInfections # phage keeps tracked of adsorbed members
-    #             lysisEvents = currentInfections * l # how many infections are now lysing?
-    #             phage.lysisEvents += lysisEvents
-    #             newVirions = lysisEvents*phage.beta
-    #             strain.infections[phageName] = currentInfections + newInfections - lysisEvents
-
-    #             newPhages += self.phageMutation(newVirions, p=m, phage=deepcopy(phage), nameGenerator=self.nameGenerator)
-
-    #             if not strain.crispr is None: # if the strain has a crispr locus
-    #                 newStrains += self.newSpacer(newInfections,p=pS, strain=deepcopy(strain), phage=deepcopy(phage), nameGenerator=self.nameGenerator)
-
-
-    #         strains[strainName].timestep(N=N,l=l,step=step)
-
-        
-    #     # phage timestep 
-    #     for phageName, phage in phages.items():
-    #         proxyPop = phage.lysisEvents*phage.beta + phage.pop
-    #         if proxyPop < 1: # remove extinct phages from community
-    #             n = np.random.uniform()
-
-    #             if n<0.01 or proxyPop<0.1: extinctPhageNames.add(phageName)
-
-    #         phages[phageName].timestep(step)
-
-    #     # update dictionaries to account for new and extinct strains and phages
-    #     newPhages_dict = {phage.name:phage for phage in newPhages}
-    #     phages.update(newPhages_dict)
-    #     self.allPhages.update(newPhages_dict)
-    #     finalPhages = {phageName:phage for phageName,phage in phages.items() if not phageName in extinctPhageNames}
-
-    #     newStrains_dict = {newStrain.name:newStrain for newStrain in newStrains}
-    #     strains.update(newStrains_dict)
-    #     self.allStrains.update(newStrains_dict)
-    #     finalStrains = {strainName:strain for strainName,strain in strains.items() if not strainName in extinctStrainNames}
-        
-    #     # Add records of extinct members to master record
-
-    #     for phageName in extinctPhageNames:
-            
-    #         self.record = self.record.append( self.phages[phageName].record, ignore_index = True )  
-
-    #     for strainName in extinctStrainNames:
-
-    #         self.record = self.record.append( self.strains[strainName].record, ignore_index = True ) 
-
-    #     # update community attributes 
-    #     self.phages = finalPhages
-    #     self.strains = finalStrains    
-        
-    #     self.__updateComSize()
-
-
-    #     return None
     
     def timestep2(self, step:int):
 
         self.growth()
         self.__updateComSize()
-        
-
-
+    
         return None
 
 
@@ -228,6 +214,7 @@ class Community():
             self.f = np.append(self.f, strain.f)
             self.y = np.append(self.y, strain.y)
             self.N = np.append(self.N, strain.pop)
+            self.allN.append(self.N)
             self.I_n = np.append(self.I_n, strain.ipop)
 
             if not strain.hasCost():
@@ -264,6 +251,7 @@ class Community():
             self.beta = np.append(self.beta, phage.beta)
             self.adsorbed = np.append(self.adsorbed, phage.adsorbed)
             self.P = np.append(self.P, phage.pop)
+            self.allP.append(self.P)
             self.I_p = np.append(self.I_p, phage.adsorbed)
         
         self.reshape(host=False)
@@ -364,17 +352,11 @@ class Community():
         # update 
         self.strains.update(newStrains)
         self.phages.update(newPhages)
+        self.allN.append(self.N)
+        self.allP.append(self.P)
 
         return None
 
-    def phagesPopDict(self):
-        """
-        returns dictionary of phage name to phage pop (str:float)
-        """
-        phages = self.phages
-        popDict = {phageName:phage.pop for phageName, phage in phages.items()}
-
-        return popDict
 
     def mutations(self, n)->dict:
         """

@@ -1,7 +1,7 @@
 ## Ford Fishman
 
 import numpy as np; import pandas as pd
-import PhageReceptor; import Population
+import PhageReceptor
 from Enums import Mutation, Type
 from copy import deepcopy
 import general as gen
@@ -85,6 +85,8 @@ class Phage():
     """
     Other functions
     """
+    def numProto(self):
+        return len(self.protospacers)
 
     @gen.dispatch_on_value
     def mutate(self, mutation) -> str:
