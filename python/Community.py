@@ -27,6 +27,10 @@ class Community():
         self.strains = strains
         self.phages = phages
 
+        # keep track of all phages and all strains
+        self.allN = list()
+        self.allP = list()
+
         self.initStrains(); self.initPhages(); self.initNetwork()
 
         # will keep history of all strains and phages
@@ -38,10 +42,6 @@ class Community():
         self.PList = list() # phage
         self.IList = list() # spacer variants
         self.SList = list() # initial host variant
-
-        # keep track of all phages and all strains
-        self.allN = list()
-        self.allP = list()
 
         self.__updateComSize()
         self.strainTimes = list()
@@ -90,9 +90,9 @@ class Community():
         strains_mat = np.zeros([maxStrains,timesteps])
 
         for i,N in enumerate(Ns):
-            zeros = np.zeros_like(N) 
+            zeros = np.zeros( maxStrains - len(N) )
             full_N = np.append(N, zeros)
-            strains_mat[:,i]
+            strains_mat[:,i] = full_N
 
         df = pd.DataFrame(None)
 
@@ -104,6 +104,7 @@ class Community():
             strain = self.strains[name]
             Type = strain.strainType
             spacers = strain.numSpacers()
+            dpop_pop = np.where((dpop==0) & (pop==0), 0, dpop/pop)
 
             df_j = pd.DataFrame(
                 {
@@ -111,7 +112,7 @@ class Community():
                     'name': self.strainIDS[j],
                     'pop': pop,
                     'dpop': dpop,
-                    'dpop_pop': dpop/pop,
+                    'dpop_pop': dpop_pop,
                     'type':Type,
                     'spacers': spacers
                 }
@@ -126,9 +127,9 @@ class Community():
         phages_mat = np.zeros([maxPhages,timesteps])
 
         for i,P in enumerate(Ps):
-            zeros = np.zeros_like(P) 
+            zeros = np.zeros( maxPhages - len(P) )
             full_P = np.append(P, zeros)
-            phages_mat[:,i]
+            phages_mat[:,i] = full_P
 
         for j in range(maxPhages):
 
@@ -137,7 +138,8 @@ class Community():
             name = self.phageIDS[j]
             phage = self.phages[name]
             Type = 'phage'
-            spacers = phage.numSpacers()
+            spacers = phage.numProto()
+            dpop_pop = np.where((dpop==0) & (pop==0), 0, dpop/pop)
 
             df_j = pd.DataFrame(
                 {
@@ -145,7 +147,7 @@ class Community():
                     'name': self.phageIDS[j],
                     'pop': pop,
                     'dpop': dpop,
-                    'dpop_pop': dpop/pop,
+                    'dpop_pop': dpop_pop,
                     'type':Type,
                     'spacers': spacers
                 }
@@ -153,8 +155,7 @@ class Community():
 
             df = df.append(df_j, ignore_index=True)
 
-
-        return None
+        return df
 
     def fullRecord(self):
         """Record of all strain and phage data from the beginning to the current step"""

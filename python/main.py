@@ -7,7 +7,7 @@ Modules
 
 import numpy as np; import pandas as pd; import sys
 import argparse
-import Strain; import Population; import Community; import Phage; import PhageReceptor; import Crispr
+import Strain; import Community; import Phage; import PhageReceptor; import Crispr
 import general as gen; from network import createNetwork, plotBipartite, adjacencyMatrix
 import timeit; import multiprocessing as mp; from functools import partial
 from tqdm import tqdm
@@ -273,6 +273,7 @@ def one_sim():
     """
     outputMain = out + "/main.csv"
     outputRichness = out + "/richness.csv"
+    outputFull = out + "/full.csv"
     outputNetwork = out + "/network.png"
     outputAdjacency = out + "/adjacency.csv"
 
@@ -396,11 +397,15 @@ def one_sim():
         columns = ['HostRichness','PhageRichness','time'],
         )
 
+    df3 = community.fullDF()
+
     df1.to_csv(outputMain)
     df2.to_csv(outputRichness)
+    df3.to_csv(outputFull)
 
     print('Output files:')
     print(outputMain)
+    print()
     # print(outputNetwork)
     print(outputRichness)
     # print(outputAdjacency)
@@ -447,8 +452,6 @@ def multi_sim(sims):
         df.loc[i] = df.columns.map( community.summary )
 
     df.to_csv(output)
-    
-
 
     return None
 
