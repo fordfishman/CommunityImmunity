@@ -177,7 +177,7 @@ class Community():
     Main timestep function
     """
     
-    def timestep2(self, step:int):
+    def timestep(self, step:int):
 
         self.growth()
         self.__updateComSize()

@@ -1,8 +1,8 @@
-library(igraph)
+# library(igraph)
 library(bipartiteD3)
 library(lpbrim)
 library(vegan)
-library(RInSp)
+# library(RInSp)
 library(here)
 library(tidyr)
 

@@ -22,13 +22,13 @@ if (is.null(opt$file)){
 }
 
 # the datafile
-path1 <- paste(opt$file, "main",sep="")
-path2 <- paste(opt$file, "richness",sep="")
-path3 <- paste(opt$file, "full",sep="")
+dfile1 <- paste0(opt$file, "main.csv")
+dfile2 <- paste0(opt$file, "richness.csv")
+dfile3 <- paste0(opt$file, "full.csv")
 
-dfile1 <- paste(path1, "csv", sep=".")
-dfile2 <- paste(path2, "csv", sep=".")
-dfile3 <- paste(path3, "csv", sep=".")
+# dfile1 <- paste(path1, "csv", sep=".")
+# dfile2 <- paste(path2, "csv", sep=".")
+# dfile3 <- paste(path3, "csv", sep=".")
 
 df1 <- read.csv(file=dfile1, header = T, row.names = 1)
 df2 <- read.csv(file=dfile2, header = T, row.names = 1)
