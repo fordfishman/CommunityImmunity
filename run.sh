@@ -9,13 +9,13 @@ python=$sourcepath/python
 r=$sourcepath/r
 # output=$sourcepath/output/latency_test/m105_pS106_aH_107_f1
 
-sims=1
-t=2000
+sims=100
+t=5000
 a=1e6
 c=0.01
 f=0
 l=0.9
-m=1e-6
+m=1e-7
 b=1.2
 pS=1e-6
 d=0.1
@@ -28,13 +28,20 @@ settings=${sims}sims_t${t}_a${a}_adsp${adsp}_b${b}_beta${beta}_c${c}_d${d}_f${f}
 
 output=$sourcepath/output/$settings
 
+log=$output/log_file.txt
+
 # remove output directory if it exists
 if [ -d $output ]; then rm -r $output; fi
 
 mkdir $output
+# initialize log file
+touch $log
+
 # time python3 $python/main.py -o $output -S $sims -pS $pS -a $a -b $b -l $l
-time python3 $python/main.py -s True -t $t -o $output -pS $pS -a $a -b $b -c $c -l $l -m $m -f $f -d $d --adsp $adsp --beta $beta --popinit $popinit --phageinit $phageinit
+time python3 $python/main.py -M -S $sims -t $t -o $output -pS $pS -a $a -b $b -c $c -l $l -m $m -f $f -d $d --adsp $adsp --beta $beta --popinit $popinit --phageinit $phageinit
 
 
-# time Rscript $r/plotGraphsMultiSim.R -f "$output/summary.csv" -o $output
-time Rscript $r/plotGraphs1Sim.R -f $output/
+time Rscript $r/plotGraphsMultiSim.R -f "$output/summary.csv" -o $output
+# time Rscript $r/plotGraphs1Sim.R -f $output/
+
+# time Rscript $r/network.R -f $output/

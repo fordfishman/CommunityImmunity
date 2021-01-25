@@ -34,20 +34,20 @@ class Crispr():
     def __len__(self):
         return len(self.spacers)
 
-    def hasSpacer(self, genome:str):
+    def hasSpacer(self, protospacer:str):
         """Only checks for single match"""
-        match = False
-        seq = ''
+        # match = False
+        # seq = ''
 
-        if len(self.spacers) != 0: # if system has spacers
-            for i in range(0, len(genome) - self.spacerLength): # check entire genome for spacers
-                seq = genome[i:i + self.spacerLength] 
+        # if len(self.spacers) != 0: # if system has spacers
+        #     for i in range(0, len(genome) - self.spacerLength): # check entire genome for spacers
+        #         seq = genome[i:i + self.spacerLength] 
 
-                if seq in self.spacers:
-                    match = True
-                    break
+        #         if seq in self.spacers:
+        #             match = True
+        #             break
 
-        return match
+        return protospacer in self.spacers
     
 
 ##########################################################################################################
@@ -56,15 +56,15 @@ class Crispr():
     Other functions
     """
 
-    def makeSpacer(self, genome:str)->str:
-        """Make a new spacer based on the incoming DNA"""
-        inds = [ i for i in range( 0, len(genome) - self.spacerLength ) ] # all possible starting spots for a new spacer
-        i = int(np.random.choice(inds))
-        return genome[i : (i + self.spacerLength)]
+    # def makeSpacer(self, genome:str)->str:
+    #     """Make a new spacer based on the incoming DNA"""
+    #     inds = [ i for i in range( 0, len(genome) - self.spacerLength ) ] # all possible starting spots for a new spacer
+    #     i = int(np.random.choice(inds))
+    #     return genome[i : (i + self.spacerLength)]
 
-    def addSpacer(self, spacer:str):
+    def addSpacer(self, protospacer:str):
         
-        self.spacers.add(spacer)
+        self.spacers.add(protospacer)
 
         self.__updateCost() # check to see if there is a cost to the CRISPR now
 

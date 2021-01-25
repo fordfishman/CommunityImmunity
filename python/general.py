@@ -7,14 +7,72 @@ from Enums import Type, Mutation
 import numpy as np
 import pandas as pd
 
-def generateName(type:Type):
-    """Make names for different objects of different classes"""
-    # name = type.value + str(num)
-    nums = range(0,10)
-    idList = np.random.choice(nums, size=10, replace=True)
-    nameEnd = "".join( map(str,idList) )
-    name = "%s%s" % (type.value,nameEnd)
-    return name
+class NameGenerator():
+    """
+    Generators names and identifier for objects
+    ----------------
+    s - strain 
+    p - phage
+    proto - protospacer
+    r - receptor
+    c - community
+
+    """
+    def __init__(self, s:int=1, p:int=1, proto:int=1, r:int=1, c:int=1):
+        self.s = s
+        self.p = p
+        self.proto = proto
+        self.r = r
+        self.c = c
+
+    def generateName(self, type_:Type):
+        """
+        Make names for different objects of different classes
+        """
+
+        ident = ''
+
+        if type_ == Type.STRAIN:
+
+            self.s += 1
+            ident = self.s 
+
+        elif type_ == Type.PHAGE:
+
+            self.p += 1
+            ident = self.p
+
+        elif type_ == Type.PROTO:
+
+            self.proto += 1
+            return self.proto # just want numbers for proto spacers
+
+        elif type_ == Type.RECEPTOR:
+
+            self.r += 1
+            ident = self.r
+
+        elif type_ == Type.COMMUNITY:
+
+            self.c += 1
+            ident = self.c
+        
+        buffer_len = 3 - len(str(ident)) # add zero buffers to names
+        buffer = "".join(["0" for i in range(buffer_len)])
+
+        name = "%s%s%s" % (type_.value,buffer,ident)
+        return name
+
+
+
+# def generateName(type:Type):
+#     """Make names for different objects of different classes"""
+#     # name = type.value + str(num)
+#     nums = range(0,10)
+#     idList = np.random.choice(nums, size=10, replace=True)
+#     nameEnd = "".join( map(str,idList) )
+#     name = "%s%s" % (type.value,nameEnd)
+#     return name
 
 def initRecord():
     """

@@ -6,3 +6,6 @@
 *output/*
 .Rproj.user
 .vscode*
+vizjs.js
+bipartiteD3Script.css
+bipartiteD3Script.js

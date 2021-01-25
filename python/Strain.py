@@ -40,6 +40,13 @@ class Strain():
         self.f = f
 
         self.record = gen.initRecord()
+
+        if self.name == 's001':
+            self.strainType = 'initial'
+        
+        else:
+            self.strainType = 'novel'
+        
         
         if not phReceptors is None:
             for receptorName in phReceptors: # for all receptors in a strain
@@ -74,7 +81,7 @@ class Strain():
 
         if not self.hasCost(): # set cost to 0 if strain does not have CRISPR-associated cost
             c = 0
-        if self.name == 's1':
+        if self.name == 's001':
             strainType = 'initial'
         
         # fitness 
@@ -106,10 +113,13 @@ class Strain():
     """
     Other functions
     """
-    def addSpacer(self,spacer:str):
+    def numSpacers(self):
+        return len(self.crispr)
+
+    def addSpacer(self,protospacer:str):
         if not self.crispr is None:
 
-            self.crispr.addSpacer(spacer)
+            self.crispr.addSpacer(protospacer)
         return None
         
 
@@ -119,21 +129,24 @@ class Strain():
         return receptor in self.phReceptors and self.phReceptors[receptor].isExpressed  
 
 
-    def isImmune(self, phageGenome:str):
+    def isImmune(self, protospacers:set):
         """Does the strain have CRISPR resistance"""
         isImmune = False
 
         if self.crispr is None:
             isImmune = False
         else:
+            for protospacer in protospacers:
 
-            isImmune = self.crispr.hasSpacer( genome = phageGenome )
+                if  self.crispr.hasSpacer( protospacer ):
+                    isImmune = True
+                    break
 
         return isImmune
 
     def isInfectable(self, phage:Phage):
         """Can this phage infect this strain"""
-        return self.isSusceptible(phage.receptor.name) and not self.isImmune(phage.genome)
+        return self.isSusceptible(phage.receptor.name) and not self.isImmune(phage.protospacers)
 
     def addReceptor(self, receptor:PhageReceptor.PhageReceptor):
         """Add a receptor to strain"""

@@ -13,6 +13,8 @@ class Type(Enum):
     POPULATION = "pop"
     COMMUNITY = "c"
     PHAGE = "p"
+    PROTO = "proto"
+
 
 class Mutation(Enum):
     """
@@ -20,6 +22,11 @@ class Mutation(Enum):
     """
     SNP = "snp"
     DELETION = "del"
+    PROTOCHANGE = "change"
+    PROTOADD = "add"
+    PROTODELETE = "del"
+
+
     
 
 
