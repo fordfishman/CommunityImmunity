@@ -3,7 +3,9 @@
 """
 Modules
 """
+import os; import uuid
 from datetime import datetime
+from subprocess import check_output
 import numpy as np; import pandas as pd; import sys
 import argparse
 import Strain; import Community; import Phage; import PhageReceptor; import Crispr
@@ -53,6 +55,7 @@ l = arguments.l
 popinit = arguments.popinit
 phageinit = arguments.phageinit
 
+path = os.getcwd()
 
 """
 Parameters
@@ -74,19 +77,19 @@ y = 1 # rate of density dependence setting in around a, y = 1 makes classic beve
 # m = 10**-6 # phage mutation rate per nt
 # l = 0.5 # proportion of infections that lead to bursting each timestep
 
-timesteps=5000
-a=1e6
-c=0.01
-f=0
-l=0.9
-m=1e-6
-b=1.2
-pS=1e-6
-d=0.1
-adsp=1e-8
-beta=100
-popinit=1e5
-phageinit=1e7
+# timesteps=5000
+# a=1e6
+# c=0.01
+# f=0
+# l=0.9
+# m=1e-6
+# b=1.2
+# pS=1e-6
+# d=0.1
+# adsp=1e-8
+# beta=100
+# popinit=1e5
+# phageinit=1e7
 
 """
 Functions called by main
@@ -153,7 +156,7 @@ def initialize():
 
     protospacers = set()
 
-    for i in range(4):
+    for i in range(8):
 
         protospacers.add( nameGenerator.generateName(Type.PROTO))
 
@@ -209,7 +212,9 @@ def initialize():
             "m":m, 
             "l":l, 
             "popinit":popinit, 
-            "phageinit":phageinit
+            "phageinit":phageinit,
+            "nodf":None,
+            "Q":None,
             }        
     )
     return com 
@@ -240,6 +245,8 @@ def main():
     return None
 
 def sim_proc(community, timesteps):
+    np.random.seed() # ensures parallel runs have different seeds
+
     N = community.N_tot # community size
     pRichness = [ community.phageRichness() ] # phage richness over time
     maxPRich = pRichness[0]
@@ -377,6 +384,8 @@ def one_sim():
 
     df3 = community.fullDF()
 
+    df3.drop(df3[df3['pop'] <= 0].index, inplace=True)
+
     df1.to_csv(outputMain)
     df2.to_csv(outputRichness)
     df3.to_csv(outputFull)
@@ -391,16 +400,35 @@ def one_sim():
 
     return None
 
+def map_store(community):
+
+    temp = '%s/temp/adjacency_%s.csv' % (out, uuid.uuid1())
+    networkR = '%s/r/multinetwork.R' % (path)
+    strainIDS, phageIDS = community.strainIDS, community.phageIDS
+    strainIDS.sort(); phageIDS.sort()
+
+    A = pd.DataFrame(community.A, columns=phageIDS, index=strainIDS)
+    A.to_csv(temp)
+    
+    output = check_output([networkR, '-f', temp]).decode('utf-8')
+    nodf, Q = output.split(" ")
+
+    community.summary['nodf'] = nodf
+    community.summary['Q'] = Q
+
+    return community.summary
+
 def multi_sim(sims):
 
     communities = [ initialize() for i in range(sims) ]
 
     # output name for run uses provided output name, number of sims, set parameters
-
+    # temp = '%s/temp/adjacency.csv' % (out)
+    # networkR = '%s/r/multinetwork.R' % (path)
     output = "%s/summary.csv" % (out) 
 
     df = pd.DataFrame(None, 
-        columns=["pop","phage","immune","susceptible","richness","phageRichness","pS", "b", "a", "c", "f","beta", "adsp", "d", "m", "l", "popinit", "phageinit"],
+        columns=["pop","phage","immune","susceptible","richness","phageRichness","pS", "b", "a", "c", "f","beta", "adsp", "d", "m", "l", "popinit", "phageinit","nodf","Q"],
     )
     
     timesteps = 5000
@@ -409,18 +437,18 @@ def multi_sim(sims):
 
     pool = mp.Pool(mp.cpu_count())
 
+    tasks = len(communities)
+
     print("%s Processors\n" % mp.cpu_count() )
 
     final_communities = pool.map(map_proc, communities, chunksize=1)
 
+    df_list = pool.map(map_store, final_communities)
     pool.close()
-
-    for i,community in enumerate(final_communities):
-        df.loc[i] = df.columns.map( community.summary )
+    
+    df = pd.DataFrame(df_list)
 
     df.to_csv(output)
-    print(df)
-
     return None
 
 """

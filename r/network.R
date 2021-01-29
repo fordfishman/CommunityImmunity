@@ -1,6 +1,6 @@
-library(optparse)
-library(lpbrim)
-library(vegan)
+suppressMessages(library(optparse))
+suppressMessages(library(lpbrim))
+suppressMessages(library(vegan))
 
 option_list <- list(
   make_option(c("-f", "--file"), type="character", default=NULL, 

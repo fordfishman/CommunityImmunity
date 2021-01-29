@@ -1,10 +1,10 @@
 ## Ford Fishman
 
-library("ggplot2")
-library("tidyr")
-library("optparse")
-library("scales")
-library("MASS")
+suppressMessages(library("ggplot2"))
+suppressMessages(library("tidyr"))
+suppressMessages(library("optparse"))
+suppressMessages(library("scales"))
+suppressMessages(library("MASS"))
 
 option_list <- list(
   make_option(c("-f", "--file"), type="character", default=NULL, 

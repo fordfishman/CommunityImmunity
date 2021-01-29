@@ -339,7 +339,7 @@ class Community():
         self.P = np.where(self.P < 0, 0, self.P)
 
         # mutations
-        newPhages = self.mutations(I_p)
+        newPhages = self.mutations(self.beta*I_p)
         
         for phage in newPhages.values():
             self.appendPhages(phage)
