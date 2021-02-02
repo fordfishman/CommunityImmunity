@@ -55,27 +55,17 @@ l = arguments.l
 popinit = arguments.popinit
 phageinit = arguments.phageinit
 
+params_list =  ["pS", "b", "a", "c", "f","beta", "adsp", "d", "m", "l", "popinit", "phageinit"]
+params = set(params_list)
+
+
 path = os.getcwd()
 
 """
 Parameters
 """
 
-
-# timesteps = 1000
-# host parameters
-# pS = 10**-6 # prob of spacer forming if infection occurs per host
-# b = 1.2 # initial max intrinsic growth of hosts
-# a = 10**6 # region where density dependence sets in for hosts
 y = 1 # rate of density dependence setting in around a, y = 1 makes classic beverton holt 
-# crisprCost = 0.1 # fitness cost of having active CRISPR system
-
-# phage parameters
-# beta = 10 # burst size of phage
-# adsp = 10**-7 # adsorption rate of phage
-# d = 0.1 # natural decay rate of phage
-# m = 10**-6 # phage mutation rate per nt
-# l = 0.5 # proportion of infections that lead to bursting each timestep
 
 # timesteps=5000
 # a=1e6
@@ -95,7 +85,7 @@ y = 1 # rate of density dependence setting in around a, y = 1 makes classic beve
 Functions called by main
 """
 
-def initialize():
+def initialize(param_dict:dict=None):
     """
     Set up initial strains and phages
     Return: com (Community)
@@ -103,12 +93,17 @@ def initialize():
     from Enums import Type
 
     from numpy.random import uniform as uni, randint
-    params = {"pS", "b", "a", "c", "f","beta", "adsp", "d", "m", "l", "popinit", "phageinit"}
-    param_dict = dict() # will contain parameters already specified at the command line
     
-    for arg,val in globals().items():
-        if arg in params and not val is None:
-            param_dict[arg] = val
+    if not param_dict is None:
+        param_dict = dict() # will contain parameters already specified at the command line
+        
+        for arg in params:
+            if arg in globals() and not globals()[arg] is None:
+                param_dict[arg] = globals()[arg]
+
+    # for arg,val in globals().items():
+    #     if arg in params and not val is None:
+    #         param_dict[arg] = val
 
 
     # if parameters aren't specified, draw them from distributions
@@ -133,7 +128,7 @@ def initialize():
 
 
     strain1 = Strain.Strain(
-        name = "s001",
+        name = "s0001",
         a=a,b=b,c=c,y=y,f=f,
         crispr = crispr0,
         phReceptors = {
@@ -161,7 +156,7 @@ def initialize():
         protospacers.add( nameGenerator.generateName(Type.PROTO))
 
     phage1 = Phage.Phage(
-        name = "p001",
+        name = "p0001",
         adsp = adsp,beta = beta, d = d,
         receptor = receptor1,
         pop = phageinit,
@@ -234,10 +229,27 @@ def main():
     print("Sim Start Time:",now.strftime("%Y-%d-%m %H:%M:%S"))
     print()
 
+    unset_params = "Unset Parameters: "
+    set_params = dict()
+    for arg in params:
+        if arg in globals():
+            if globals()[arg] is None:
+                unset_params += arg + " "
+            else:
+                set_params[arg] = globals()[arg]
+    
+    print(unset_params)
+    print()
+    
     if single_run:
-        one_sim()
+        one_sim(set_params)
     else:
-        multi_sim(sims)
+        
+        print("Set parameters:")
+        for param in params_list:
+            print("%s:\t%s" % (param, set_params[param]))
+
+        multi_sim(sims, set_params)
 
     now = datetime.now()
     print("Sim End Time:",now.strftime("%Y-%d-%m %H:%M:%S"),'\n')
@@ -281,7 +293,7 @@ def sim_proc(community, timesteps):
     return community
 
 
-def one_sim():
+def one_sim(params):
 
     """
     Runs a single simulation with given parameters
@@ -291,14 +303,15 @@ def one_sim():
     outputFull = out + "/full.csv"
     outputNetwork = out + "/network.png"
     outputAdjacency = out + "/adjacency.csv"
+    networkR = '%s/r/multinetwork.R' % (path)
 
-    community = initialize()
+    community = initialize(params)
     
     print("pS:\t%s"%community.pS)
-    print("b:\t%s"%community.strains["s001"].b)
-    print("a:\t%s"%community.strains["s001"].a)
-    print("c:\t%s"%community.strains["s001"].c)
-    print("f:\t%s"%community.strains["s001"].f)
+    print("b:\t%s"%community.strains["s0001"].b)
+    print("a:\t%s"%community.strains["s0001"].a)
+    print("c:\t%s"%community.strains["s0001"].c)
+    print("f:\t%s"%community.strains["s0001"].f)
     print("beta:\t%s"%beta)
     print("adsp:\t%s"%adsp)
     print("d:\t%s"%d)
@@ -335,10 +348,7 @@ def one_sim():
     community.summary["phage"] = community.PList[-1]
     community.summary["immune"] = community.IList[-1]
     community.summary["susceptible"] = community.SList[-1]
-    
-    print('Initial conditions:')
-    print(community.summary)
-    print()
+
 
     net = community.net
     plotBipartite(net, outputNetwork)
@@ -347,6 +357,16 @@ def one_sim():
 
     A = pd.DataFrame(community.A, columns=phageIDS, index=strainIDS)
     A.to_csv(outputAdjacency)
+
+    output = check_output([networkR, '-f', outputAdjacency]).decode('utf-8')
+    nodf, Q = output.split(" ")
+
+    community.summary['nodf'] = nodf
+    community.summary['Q'] = Q
+
+    print('Initial conditions:')
+    print(community.summary)
+    print()
 
     N = str(community.NList[-1]) # community size
     P = str(community.PList[-1])
@@ -418,9 +438,9 @@ def map_store(community):
 
     return community.summary
 
-def multi_sim(sims):
+def multi_sim(sims, params):
 
-    communities = [ initialize() for i in range(sims) ]
+    communities = [ initialize(params) for i in range(sims) ]
 
     # output name for run uses provided output name, number of sims, set parameters
     # temp = '%s/temp/adjacency.csv' % (out)

@@ -41,7 +41,7 @@ class Strain():
 
         self.record = gen.initRecord()
 
-        if self.name == 's001':
+        if self.name == 's0001':
             self.strainType = 'initial'
         
         else:
@@ -81,7 +81,7 @@ class Strain():
 
         if not self.hasCost(): # set cost to 0 if strain does not have CRISPR-associated cost
             c = 0
-        if self.name == 's001':
+        if self.name == 's0001':
             strainType = 'initial'
         
         # fitness 

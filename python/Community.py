@@ -396,10 +396,10 @@ class Community():
         """
         # equal prob. of a change, addition, or deletion of protospacer
         if len(phage.protospacers) >= 1:
-            mutation = np.random.choice([Mutation.PROTOCHANGE, Mutation.PROTODELETE, Mutation.PROTOADD])
+            # mutation = np.random.choice([Mutation.PROTOCHANGE, Mutation.PROTODELETE, Mutation.PROTOADD])
+            mutation = Mutation.PROTOCHANGE
         else:
             mutation = Mutation.PROTOADD
-        # newGenome = phage.mutate(mutation)
         if mutation is Mutation.PROTOADD or mutation is Mutation.PROTOCHANGE:
             protoName = self.nameGenerator.generateName(Type.PROTO)
             protospacers = phage.mutate(mutation, protoName)
