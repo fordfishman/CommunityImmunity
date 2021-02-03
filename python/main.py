@@ -247,7 +247,8 @@ def main():
         
         print("Set parameters:")
         for param in params_list:
-            print("%s:\t%s" % (param, set_params[param]))
+            if param in set_params:
+                print("%s:\t%s" % (param, set_params[param]))
 
         multi_sim(sims, set_params)
 
