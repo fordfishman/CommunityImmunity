@@ -13,6 +13,8 @@ cwd=$(pwd)
 
 sourcepath=$cwd/GitHub/CommunityImmunity
 
+cd $sourcepath
+
 python=$sourcepath/python
 r=$sourcepath/r
 
