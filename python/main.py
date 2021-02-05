@@ -3,7 +3,7 @@
 """
 Modules
 """
-import os; import uuid
+import os; import uuid; import warnings
 from datetime import datetime
 from subprocess import check_output
 import numpy as np; import pandas as pd; import sys
@@ -190,12 +190,12 @@ def initialize(param_dict:dict=None):
 
     com.summary = pd.Series(
         data = {
-            "pop":None,
-            "phage":None,
-            "immune":None,
-            "susceptible":None,
-            "richness":None,
-            "phageRichness":None,
+            "pop":np.nan,
+            "phage":np.nan,
+            "immune":np.nan,
+            "susceptible":np.nan,
+            "richness":np.nan,
+            "phageRichness":np.nan,
             "pS":pS,
             "b":b,
             "a":a, 
@@ -208,8 +208,8 @@ def initialize(param_dict:dict=None):
             "l":l, 
             "popinit":popinit, 
             "phageinit":phageinit,
-            "nodf":None,
-            "Q":None,
+            "nodf":np.nan,
+            "Q":np.nan,
             }        
     )
     return com 
@@ -299,6 +299,8 @@ def one_sim(params):
     """
     Runs a single simulation with given parameters
     """
+    warnings.filterwarnings("ignore", category=RuntimeWarning)
+
     outputMain = out + "/main.csv"
     outputRichness = out + "/richness.csv"
     outputFull = out + "/full.csv"
@@ -359,11 +361,13 @@ def one_sim(params):
     A = pd.DataFrame(community.A, columns=phageIDS, index=strainIDS)
     A.to_csv(outputAdjacency)
 
-    output = check_output([networkR, '-f', outputAdjacency]).decode('utf-8')
-    nodf, Q = output.split(" ")
+    if community.A.shape[0] > 1 and community.A.shape[0] < -1:
 
-    community.summary['nodf'] = nodf
-    community.summary['Q'] = Q
+        output = check_output([networkR, '-f', outputAdjacency]).decode('utf-8')
+        nodf, Q = output.split(" ")
+
+        community.summary['nodf'] = nodf
+        community.summary['Q'] = Q
 
     print('Initial conditions:')
     print(community.summary)
@@ -422,6 +426,7 @@ def one_sim(params):
     return None
 
 def map_store(community):
+    warnings.filterwarnings("ignore", category=RuntimeWarning)
 
     temp = '%s/temp/adjacency_%s.csv' % (out, uuid.uuid1())
     networkR = '%s/r/multinetwork.R' % (path)
@@ -431,11 +436,12 @@ def map_store(community):
     A = pd.DataFrame(community.A, columns=phageIDS, index=strainIDS)
     A.to_csv(temp)
     
-    output = check_output([networkR, '-f', temp]).decode('utf-8')
-    nodf, Q = output.split(" ")
+    if community.A.shape[0] > 1 and community.A.shape[0] < -1:
+        output = check_output([networkR, '-f', temp]).decode('utf-8')
+        nodf, Q = output.split(" ")
 
-    community.summary['nodf'] = nodf
-    community.summary['Q'] = Q
+        community.summary['nodf'] = nodf
+        community.summary['Q'] = Q
 
     return community.summary
 
