@@ -19,7 +19,7 @@ cd $sourcepath
 python=$sourcepath/python
 r=$sourcepath/r
 
-dt=$(date "+%Y%d%m_%H%M")
+dt=$(date "+%Y%m%d_%H%M")
 
 sims=1000
 t=5000
