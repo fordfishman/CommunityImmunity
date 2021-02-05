@@ -1,7 +1,7 @@
 #!/bin/bash
 #PBS -k o 
-#PBS -l nodes=1:ppn=24,walltime=2:00:00:00
-#PBS -l vmem=100gb
+#PBS -l nodes=1:ppn=16,walltime=0:02:00:00
+#PBS -l vmem=80gb
 #PBS -M ffishman@iu.edu
 #PBS -m abe 
 #PBS -N multi_im
@@ -9,6 +9,7 @@
 
 
 # Set pathing
+source activate com_im
 cwd=$(pwd)
 
 sourcepath=$cwd/GitHub/CommunityImmunity
@@ -20,7 +21,7 @@ r=$sourcepath/r
 
 dt=$(date "+%Y%d%m_%H%M")
 
-sims=100
+sims=1000
 t=5000
 a=1e6
 c=0.01
