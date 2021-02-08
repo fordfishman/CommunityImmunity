@@ -361,7 +361,7 @@ def one_sim(params):
     A = pd.DataFrame(community.A, columns=phageIDS, index=strainIDS)
     A.to_csv(outputAdjacency)
 
-    if community.A.shape[0] > 1 and community.A.shape[0] < -1:
+    if community.A.shape[0] > 1 and community.A.shape[0] > 1:
 
         output = check_output([networkR, '-f', outputAdjacency]).decode('utf-8')
         nodf, Q = output.split(" ")
@@ -436,7 +436,7 @@ def map_store(community):
     A = pd.DataFrame(community.A, columns=phageIDS, index=strainIDS)
     A.to_csv(temp)
     
-    if community.A.shape[0] > 1 and community.A.shape[0] < -1:
+    if community.A.shape[0] > 1 and community.A.shape[0] > 1:
         output = check_output([networkR, '-f', temp]).decode('utf-8')
         nodf, Q = output.split(" ")
 
