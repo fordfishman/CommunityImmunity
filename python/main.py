@@ -365,10 +365,14 @@ def one_sim(params):
     if community.A.shape[0] > 1 and community.A.shape[1] > 1:
 
         output = check_output([networkR, '-f', outputAdjacency]).decode('utf-8')
-        nodf, Q = output.split(" ")
-
+        items = output.split(" ")
+        
+        nodf = items[0]
         community.summary['nodf'] = nodf
-        community.summary['Q'] = Q
+
+        if len(items) > 1:
+            Q = items[1]
+            community.summary['Q'] = Q
 
     print('Initial conditions:')
     print(community.summary)
@@ -439,10 +443,14 @@ def map_store(community):
     
     if community.A.shape[0] > 1 and community.A.shape[1] > 1:
         output = check_output([networkR, '-f', temp]).decode('utf-8')
-        nodf, Q = output.split(" ")
+        items = output.split(" ")
 
+        nodf = items[0]
         community.summary['nodf'] = nodf
-        community.summary['Q'] = Q
+
+        if len(items) > 1:
+            Q = items[1]
+            community.summary['Q'] = Q
 
     return community.summary
 
