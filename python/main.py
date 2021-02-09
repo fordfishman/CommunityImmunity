@@ -190,6 +190,7 @@ def initialize(param_dict:dict=None):
 
     com.summary = pd.Series(
         data = {
+            "id": uuid.uuid1(),
             "pop":np.nan,
             "phage":np.nan,
             "immune":np.nan,
@@ -428,7 +429,7 @@ def one_sim(params):
 def map_store(community):
     warnings.filterwarnings("ignore", category=RuntimeWarning)
 
-    temp = '%s/temp/adjacency_%s.csv' % (out, uuid.uuid1())
+    temp = '%s/temp/adjacency_%s.csv' % (out, community.summary['id'])
     networkR = '%s/r/multinetwork.R' % (path)
     strainIDS, phageIDS = community.strainIDS, community.phageIDS
     strainIDS.sort(); phageIDS.sort()
@@ -455,7 +456,7 @@ def multi_sim(sims, params):
     output = "%s/summary.csv" % (out) 
 
     df = pd.DataFrame(None, 
-        columns=["pop","phage","immune","susceptible","richness","phageRichness","pS", "b", "a", "c", "f","beta", "adsp", "d", "m", "l", "popinit", "phageinit","nodf","Q"],
+        columns=['id',"pop","phage","immune","susceptible","richness","phageRichness","pS", "b", "a", "c", "f","beta", "adsp", "d", "m", "l", "popinit", "phageinit","nodf","Q"],
     )
     
     timesteps = 5000

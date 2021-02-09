@@ -28,6 +28,8 @@ links <- read.csv(path, header=T, row.names=1)
 # 
 # plot(net, vertex.label=NA, vertex.size=7, layout=layout_as_bipartite)
 
+# links <- read.csv('adjacency_304d2d88-6b06-11eb-aee2-378af3a43d3f.csv', header=T, row.names=1)
+
 # nestedness
 nodf <- nestednodf(links)
 write("NODF:",file=log_file, append=T)
@@ -36,10 +38,17 @@ write(nodf$statistic['NODF'],file=log_file, append=T)
 
 # modularity
 B <- as.matrix(links)
+
 B <- B[rowSums(B)>0, colSums(B)>0]
-Q <- findModules(B, sparse=FALSE)$Q
-write("\nQ:",file=log_file, append=T)
-write(Q,file=log_file, append=T)
+
+if (!is.null(dim(B)) ){
+  Q <- findModules(B, sparse=FALSE)$Q
+  write("\nQ:",file=log_file, append=T)
+  write(Q,file=log_file, append=T)
+}
+  
+
+
 
 
 

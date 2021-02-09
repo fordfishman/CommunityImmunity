@@ -23,19 +23,18 @@ links <- read.csv(opt$file, header=T, row.names=1)
 
 # nestedness
 nodf <- nestednodf(links)
-# print(nodf$statistic['NODF'])
-
-# write("NODF:",file=log_file, append=T)
-# write(nodf$statistic['NODF'],file=log_file, append=T)
 
 
 # modularity
 B <- as.matrix(links)
 B <- B[rowSums(B)>0, colSums(B)>0]
-Q <- findModules(B, sparse=FALSE)$Q
 
-# print(Q)
-cat(nodf$statistic['NODF'],Q)
+if (!is.null(dim(B)) ){
+  Q <- findModules(B, sparse=FALSE)$Q
+  
+  # print(Q)
+  cat(nodf$statistic['NODF'],Q)
+}
 
 # write("\nQ:",file=log_file, append=T)
 # write(Q,file=log_file, append=T)
