@@ -1,0 +1,20 @@
+Sim Start Time: 2021-09-02 15:46:09
+
+Unset Parameters: m 
+
+Set parameters:
+pS:	1e-06
+b:	1.2
+a:	1000000.0
+c:	0.01
+f:	0.0
+beta:	100
+adsp:	1e-08
+d:	0.1
+l:	0.9
+popinit:	100000.0
+phageinit:	10000000.0
+24 Processors
+
+Sim End Time: 2021-09-02 16:20:44 
+
