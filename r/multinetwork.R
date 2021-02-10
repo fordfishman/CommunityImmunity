@@ -29,12 +29,14 @@ nodf <- nestednodf(links)
 B <- as.matrix(links)
 B <- B[rowSums(B)>0, colSums(B)>0]
 
+Q <- ''
 if (!is.null(dim(B)) ){
   Q <- findModules(B, sparse=FALSE)$Q
   
   # print(Q)
-  cat(nodf$statistic['NODF'],Q)
 }
+
+cat(nodf$statistic['NODF'],Q)
 
 # write("\nQ:",file=log_file, append=T)
 # write(Q,file=log_file, append=T)
