@@ -155,17 +155,22 @@ def nestedness(G):
 
 def plotNQ(summary, path,unset:list=None):
 
+    # summary = summary.dropna(how='all')
     nodf = summary.nodf
     Q = summary.Q
 
     num_unset = 0
     
-
-    if unset is list:
+    if isinstance(unset, list):
         num_unset = len(unset)
     
     panels = 1 + num_unset*2
 
+    if panels==1:
+        fig, axs = plt.subplots(figsize=(8, 4), dpi=80)
+        axs.scatter(Q, nodf, c='black');axs.set_xlabel('Modularity (Q)'); axs.set_ylabel('Nestedness (NODF)');
+        return None
+    
     fig, axs = plt.subplots(panels, 1, figsize=(8, 4*panels), dpi=80)
     axs[0].scatter(Q, nodf, c='black');axs[0].set_xlabel('Modularity (Q)'); axs[0].set_ylabel('Nestedness (NODF)');
 
@@ -173,6 +178,10 @@ def plotNQ(summary, path,unset:list=None):
     for i in range(num_unset):
         var = unset[i]
         data = summary[var]
+
+        if np.mean(data) > 1e4 or np.mean(data) < 1e-4:
+            data = np.log10(data)
+
         ind += 1
         axs[ind].scatter(data, Q, c='black');axs[ind].set_xlabel(var); axs[ind].set_ylabel('Modularity (Q)');
         ind +=1

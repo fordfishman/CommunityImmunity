@@ -21,7 +21,7 @@ parser.add_argument('-o','--output', default='comim', type=str, help="Desired na
 parser.add_argument('-t','--timesteps', default=2000, type=int, help="Number of timesteps in each simulation")
 parser.add_argument('-s','--single', dest='single', action='store_true', help='Single simulation mode')
 parser.add_argument('-M','--multi', dest='single', action='store_false', help='Multi simulation mode')
-parser.add_argument('-S','--sims', default=100, type=int, help="Number of simulations to run (--single must be False)")
+parser.add_argument('-S','--sims', default=10, type=int, help="Number of simulations to run (--single must be False)")
 parser.add_argument('-pS', default=None, type=float, help="probability of spacer formation per infection")
 parser.add_argument('-m', default=None, type=float, help="phage mutation rate per nt")
 parser.add_argument('-b', default=None, type=float, help="host per capita growth rate")
@@ -40,7 +40,7 @@ arguments = parser.parse_args()
 out = arguments.output
 timesteps = arguments.timesteps
 single_run = arguments.single
-# single_run = False
+single_run = False
 sims = arguments.sims
 pS = arguments.pS
 m = arguments.m
@@ -231,11 +231,13 @@ def main():
     print()
 
     unset_params = "Unset Parameters: "
+    unset = list()
     set_params = dict()
     for arg in params:
         if arg in globals():
             if globals()[arg] is None:
                 unset_params += arg + " "
+                unset.append(arg)
             else:
                 set_params[arg] = globals()[arg]
     
@@ -251,7 +253,7 @@ def main():
             if param in set_params:
                 print("%s:\t%s" % (param, set_params[param]))
 
-        multi_sim(sims, set_params, unset_params)
+        multi_sim(sims, set_params, unset_params=unset)
 
     now = datetime.now()
     print("Sim End Time:",now.strftime("%Y-%d-%m %H:%M:%S"),'\n')
@@ -446,11 +448,11 @@ def map_store(community):
         items = output.split(" ")
 
         nodf = items[0]
-        community.summary['nodf'] = nodf
+        community.summary['nodf'] =  np.array(nodf, dtype=np.float32)
 
         if len(items) > 1:
             Q = items[1]
-            community.summary['Q'] = Q
+            community.summary['Q'] = np.array(Q, dtype=np.float32)
 
     return community.summary
 
