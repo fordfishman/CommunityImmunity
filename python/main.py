@@ -9,7 +9,7 @@ from subprocess import check_output
 import numpy as np; import pandas as pd; import sys
 import argparse
 import Strain; import Community; import Phage; import PhageReceptor; import Crispr
-import general as gen; from network import createNetwork, plotBipartite, adjacencyMatrix
+import general as gen; from network import createNetwork, plotBipartite, adjacencyMatrix, plotNQ
 import timeit; import multiprocessing as mp; from functools import partial
 from tqdm import tqdm
 
@@ -251,7 +251,7 @@ def main():
             if param in set_params:
                 print("%s:\t%s" % (param, set_params[param]))
 
-        multi_sim(sims, set_params)
+        multi_sim(sims, set_params, unset_params)
 
     now = datetime.now()
     print("Sim End Time:",now.strftime("%Y-%d-%m %H:%M:%S"),'\n')
@@ -454,14 +454,15 @@ def map_store(community):
 
     return community.summary
 
-def multi_sim(sims, params):
+def multi_sim(sims, set_params, unset_params):
 
-    communities = [ initialize(params) for i in range(sims) ]
+    communities = [ initialize(set_params) for i in range(sims) ]
 
     # output name for run uses provided output name, number of sims, set parameters
     # temp = '%s/temp/adjacency.csv' % (out)
     # networkR = '%s/r/multinetwork.R' % (path)
     output = "%s/summary.csv" % (out) 
+    nq_path = "%s/nq.png" % (out) 
 
     df = pd.DataFrame(None, 
         columns=['id',"pop","phage","immune","susceptible","richness","phageRichness","pS", "b", "a", "c", "f","beta", "adsp", "d", "m", "l", "popinit", "phageinit","nodf","Q"],
@@ -485,6 +486,8 @@ def multi_sim(sims, params):
     df = pd.DataFrame(df_list)
 
     df.to_csv(output)
+    plotNQ(df, nq_path, unset=unset_params)
+
     return None
 
 """

@@ -16,9 +16,6 @@ if (is.null(opt$file)){
   stop("At least one argument must be supplied (input file).n", call.=FALSE)
 }
 
-# path <- paste0(opt$file, "adjacency.csv")
-# log_file <- paste0(opt$file, "log_file.txt")
-
 links <- read.csv(opt$file, header=T, row.names=1)
 
 # nestedness
@@ -32,11 +29,7 @@ B <- B[rowSums(B)>0, colSums(B)>0]
 Q <- ''
 if (!is.null(dim(B)) ){
   Q <- findModules(B, sparse=FALSE)$Q
-  
-  # print(Q)
+
 }
 
 cat(nodf$statistic['NODF'],Q)
-
-# write("\nQ:",file=log_file, append=T)
-# write(Q,file=log_file, append=T)

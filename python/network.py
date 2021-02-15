@@ -153,13 +153,34 @@ def nestedness(G):
 
     return nodf
 
-def modularity(G):
-    """
+def plotNQ(summary, path,unset:list=None):
 
-    """
+    nodf = summary.nodf
+    Q = summary.Q
 
-    x, y = bipartNodes(G)
-    A = nx.bipartite.biadjacency_matrix(G, row_order=x, column_order=y)
+    num_unset = 0
+    
+
+    if unset is list:
+        num_unset = len(unset)
+    
+    panels = 1 + num_unset*2
+
+    fig, axs = plt.subplots(panels, 1, figsize=(8, 4*panels), dpi=80)
+    axs[0].scatter(Q, nodf, c='black');axs[0].set_xlabel('Modularity (Q)'); axs[0].set_ylabel('Nestedness (NODF)');
+
+    ind = 0
+    for i in range(num_unset):
+        var = unset[i]
+        data = summary[var]
+        ind += 1
+        axs[ind].scatter(data, Q, c='black');axs[ind].set_xlabel(var); axs[ind].set_ylabel('Modularity (Q)');
+        ind +=1
+        axs[ind].scatter(data, nodf, c='black');axs[ind].set_xlabel(var); axs[ind].set_ylabel('Nestedness (NODF)');
+
+    plt.savefig(path)
+
+    return None
 
 ######### TESTING ##########
 
