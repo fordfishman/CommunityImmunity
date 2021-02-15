@@ -10,14 +10,15 @@ r=$sourcepath/r
 # output=$sourcepath/output/latency_test/m105_pS106_aH_107_f1
 
 dt=$(date "+%Y%d%m_%H%M")
+dt=test
 
-sims=1
-t=5000
+sims=10
+t=1000
 a=1e6
 c=0.01
 f=0
 l=0.9
-# m=1e-7
+m=1e-9
 b=1.2
 pS=1e-6
 d=0.1
@@ -43,7 +44,7 @@ touch $log
 # run in either single or multi mode
 if [[ $sims -eq 1 ]]
 then
-    python3 $python/main.py -s -S $sims -t $t -o $output -pS $pS -a $a -b $b -c $c -l $l -f $f -d $d --adsp $adsp --beta $beta --popinit $popinit --phageinit $phageinit > $log
+    python3 $python/main.py -s -S $sims -t $t -o $output -pS $pS -a $a -b $b -c $c -l $l -m $m -f $f -d $d --adsp $adsp --beta $beta --popinit $popinit --phageinit $phageinit > $log
     Rscript $r/plotGraphs1Sim.R -f $output/
 else
     python3 $python/main.py -M -S $sims -t $t -o $output -pS $pS -a $a -b $b -c $c -l $l -f $f -d $d --adsp $adsp --beta $beta --popinit $popinit --phageinit $phageinit > $log
