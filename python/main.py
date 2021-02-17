@@ -448,11 +448,12 @@ def map_store(community):
         items = output.split(" ")
 
         nodf = items[0]
-        community.summary['nodf'] =  np.array(nodf, dtype=np.float32)
+        community.summary['nodf'] =  float(nodf)
 
         if len(items) > 1:
             Q = items[1]
-            community.summary['Q'] = np.array(Q, dtype=np.float32)
+            if Q != "":
+                community.summary['Q'] = float(Q)
 
     return community.summary
 
