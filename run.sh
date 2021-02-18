@@ -12,13 +12,13 @@ r=$sourcepath/r
 dt=$(date "+%Y%d%m_%H%M")
 dt=test
 
-sims=10
+sims=1
 t=1000
 a=1e6
 c=0.01
 f=0
 l=0.9
-m=1e-9
+m=1e-7
 b=1.2
 pS=1e-6
 d=0.1

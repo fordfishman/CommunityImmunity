@@ -2,6 +2,7 @@
 
 import numpy as np; import pandas as pd
 import PhageReceptor
+from Organism import Organism
 from Enums import Mutation, Type
 from copy import deepcopy
 import general as gen
@@ -10,7 +11,7 @@ NUCLEOTIDES = ("A","C","G","T") # tuple of nucleotides
 
 ##########################################################################################################
 
-class Phage():
+class Phage(Organism):
 
     """
     Phage
@@ -22,16 +23,14 @@ class Phage():
     # strains (set(str)): set of strains this phage can infect
     """
 
-    def __init__(self, name:str, adsp:float, beta:float, d:float, receptor:PhageReceptor, protospacers:set, genome:str = None,genomeLength:int = 100, pop:float = 1, fitness:float = 1):
-
-        self.name = name
-        self.pop = pop
+    def __init__(self, name:str, adsp:float, beta:float, d:float, m:float, receptor:PhageReceptor, protospacers:set, genome:str = None,genomeLength:int = 100, pop:float = 1, fitness:float = 1, evoTraits:list=None):
+        super().__init__(name, pop, 'phage',evoTraits)
         self.receptor = receptor
         self.fitness = fitness
         self.record = None
-        self.type = 'phage'
         self.adsp = adsp
         self.beta = beta
+        self.m = m
         self.d = d
         self.adsorbed = 0
         self.lysisEvents = 0
@@ -53,31 +52,31 @@ class Phage():
 ##########################################################################################################
 
     """
-    Main timestep function
+    Main timestep function (deprecated)
     """
 
-    def timestep(self, step:int):
-        """
-        step (int): current timestep
-        """
+    # def timestep(self, step:int):
+    #     """
+    #     step (int): current timestep
+    #     """
 
-        i = len(self.record) # how long this phage has been around
-        beta = self.beta
-        d = self.d
+    #     i = len(self.record) # how long this phage has been around
+    #     beta = self.beta
+    #     d = self.d
 
-        Np = self.pop # phage pop
-        adsorbed = self.adsorbed
-        lysisEvents = self.lysisEvents
+    #     Np = self.pop # phage pop
+    #     adsorbed = self.adsorbed
+    #     lysisEvents = self.lysisEvents
         
-        self.pop += beta*lysisEvents - adsorbed - d*Np
+    #     self.pop += beta*lysisEvents - adsorbed - d*Np
         
-        # record data from this timestep
-        # columns: "timestep", "name", "pop", "dpop", "dpop_pop","type", "spacers"
-        self.record.loc[i] = [step, self.name, self.pop, self.pop-Np, (self.pop-Np)/Np, self.type, None]
+    #     # record data from this timestep
+    #     # columns: "timestep", "name", "pop", "dpop", "dpop_pop","type", "spacers"
+    #     self.record.loc[i] = [step, self.name, self.pop, self.pop-Np, (self.pop-Np)/Np, self.type, None]
 
-        self.lysisEvents = 0
-        self.adsorbed = 0
-        return None
+    #     self.lysisEvents = 0
+    #     self.adsorbed = 0
+    #     return None
 
 
 ##########################################################################################################

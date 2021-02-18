@@ -18,11 +18,9 @@ class Community():
     k (int): carrying capacity
     """
 
-    def __init__(self, c:float, pS:float, m:float, l:float, strains:dict, phages:dict=None, nameGenerator=None):
+    def __init__(self, c:float, l:float, strains:dict, phages:dict=None, nameGenerator=None):
 
         self.base_c = c
-        self.pS = pS
-        self.m = m
         self.l = l
         self.strains = strains
         self.phages = phages
@@ -48,7 +46,7 @@ class Community():
         self.phageTimes = list()
         self.dfTimes = list()
         self.otherTimes = list()
-        self.record = gen.initRecord()
+        # self.record = gen.initRecord()
         self.nameGenerator = nameGenerator
 
 ##########################################################################################################
@@ -102,7 +100,7 @@ class Community():
             dpop = np.ediff1d(pop, to_begin=0)
             name = self.strainIDS[j]
             strain = self.strains[name]
-            Type = strain.strainType
+            type_ = strain.type
             spacers = strain.numSpacers()
             dpop_pop = np.where((dpop==0) & (pop==0), 0, dpop/pop)
 
@@ -113,7 +111,7 @@ class Community():
                     'pop': pop,
                     'dpop': dpop,
                     'dpop_pop': dpop_pop,
-                    'type':Type,
+                    'type':type_,
                     'spacers': spacers
                 }
             )
@@ -137,7 +135,6 @@ class Community():
             dpop = np.ediff1d(pop, to_begin=0)
             name = self.phageIDS[j]
             phage = self.phages[name]
-            Type = 'phage'
             spacers = phage.numProto()
             dpop_pop = np.where((dpop==0) & (pop==0), 0, dpop/pop)
 
@@ -148,7 +145,7 @@ class Community():
                     'pop': pop,
                     'dpop': dpop,
                     'dpop_pop': dpop_pop,
-                    'type':Type,
+                    'type':'phage',
                     'spacers': spacers
                 }
             )
@@ -157,19 +154,19 @@ class Community():
 
         return df
 
-    def fullRecord(self):
-        """Record of all strain and phage data from the beginning to the current step"""
-        record = self.record
+    # def fullRecord(self):
+    #     """Record of all strain and phage data from the beginning to the current step"""
+    #     record = self.record
 
-        for phage in self.phages.values():
+    #     for phage in self.phages.values():
             
-            record = record.append( phage.record, ignore_index = True)  
+    #         record = record.append( phage.record, ignore_index = True)  
 
-        for strain in self.strains.values():
+    #     for strain in self.strains.values():
 
-            record = record.append( strain.record, ignore_index = True )  
+    #         record = record.append( strain.record, ignore_index = True )  
         
-        return record
+    #     return record
 
 ##########################################################################################################
 
@@ -183,7 +180,6 @@ class Community():
         self.__updateComSize()
     
         return None
-
 
 ##########################################################################################################
 
@@ -206,6 +202,7 @@ class Community():
         self.y = np.array([])
         self.N = np.array([])
         self.I_n = np.array([])
+        self.pS = np.array([])
 
         for strain in strains.values():
 
@@ -217,6 +214,7 @@ class Community():
             self.N = np.append(self.N, strain.pop)
             self.allN.append(self.N)
             self.I_n = np.append(self.I_n, strain.ipop)
+            self.pS = np.append(self.pS, strain.pS).reshape(-1,1)
 
             if not strain.hasCost():
                 c = 0
@@ -240,9 +238,11 @@ class Community():
         self.d = np.array([])
         self.adsp = np.array([])
         self.beta = np.array([])
+        self.m = np.array([])
         self.P = np.array([])
         self.adsorbed = np.array([])
         self.I_p = np.array([])
+        
 
         for phage in phages.values():
 
@@ -250,6 +250,7 @@ class Community():
             self.d = np.append(self.d, phage.d)
             self.adsp = np.append(self.adsp, phage.adsp)
             self.beta = np.append(self.beta, phage.beta)
+            self.m = np.append(self.m, phage.m)
             self.adsorbed = np.append(self.adsorbed, phage.adsorbed)
             self.P = np.append(self.P, phage.pop)
             self.allP.append(self.P)
@@ -265,6 +266,7 @@ class Community():
         self.d = np.append(self.d, phage.d)
         self.adsp = np.append(self.adsp, phage.adsp)
         self.beta = np.append(self.beta, phage.beta)
+        self.m = np.append(self.m, phage.m)
         self.adsorbed = np.append(self.adsorbed, phage.adsorbed)
         self.P = np.append(self.P, phage.pop)
         self.I_p = np.append(self.I_p, phage.adsorbed)
@@ -281,6 +283,7 @@ class Community():
         self.y = np.append(self.y, strain.y)
         self.N = np.append(self.N, strain.pop)
         self.I_n = np.append(self.I_n, strain.ipop)
+        self.pS = np.append(self.pS, strain.pS).reshape(-1,1)
 
         if not strain.hasCost():
             c = 0
@@ -409,21 +412,32 @@ class Community():
 
         protospacers = phage.mutate(mutation)
         newName = self.nameGenerator.generateName(Type.PHAGE)
-        mod = phage.fitness
-        # mod = 1 
-        fitness = np.random.uniform(0,1.5) * mod # some cost to mutating genome
-        fitness = 1
+
+        p = {
+            'adsp': phage.adsp,
+            'beta': phage.beta, 
+            'd': phage.d, 
+            'm': phage.m,
+            'fitness':phage.fitness
+        }
+
+        if not phage.evoTraits is None:
+
+            for param in phage.evoTraits: # limit scale of change to current magnitude
+                p[param] = np.random.normal(0, 0.2) * p[param] + p[param]
 
         newPhage = Phage(
             name=newName, 
-            adsp = phage.adsp, 
-            beta = phage.beta, 
-            d = phage.d, 
+            adsp = p['adsp'], 
+            beta = p['beta'], 
+            d = p['d'], 
+            m = p['m'],
             receptor=phage.receptor,
             # genome=newGenome, 
             protospacers=protospacers,
-            fitness = fitness,
-            pop = 1.0
+            fitness = p['fitness'],
+            pop = 1.0,
+            evoTraits=phage.evoTraits
         )
         
         return newPhage
@@ -469,12 +483,6 @@ class Community():
         """Adds a new strain based on another but with a new spacer"""
 
         oldSpacers = strain.crispr.spacers
-        
-        a = strain.a
-        b = strain.b 
-        c = strain.c
-        f = strain.f 
-        y = strain.y
 
         crispr = Crispr( oldSpacers ) 
 
@@ -485,12 +493,28 @@ class Community():
             
         newName = self.nameGenerator.generateName(Type.STRAIN)
 
+        p = {
+            'a': strain.a,
+            'b': strain.b, 
+            'c': strain.c, 
+            'f': strain.f,
+            'y': strain.y,
+            'pS': strain.pS
+        }
+
+        if not strain.evoTraits is None:
+
+            for param in strain.evoTraits: # limit scale of change to current magnitude
+                p[param] = np.random.normal(0, 0.2) * p[param] + p[param]
+
         newStrain = Strain( # organism with new spacer is a new strain, one starting cell
             name=newName,
-            a=a, b=b, c=c, f=f, y=y,
+            type_ = 'novel',
+            a=p['a'], b=p['b'], c=p['c'], f=p['f'], y=p['y'], pS=p['pS'],
             crispr=crispr,
             phReceptors=strain.phReceptors,
-            pop = 1.0
+            pop = 1.0,
+            evoTraits=strain.evoTraits
         )
         
         return newStrain
@@ -542,18 +566,18 @@ class Community():
 
         return edges
 
-    def trimNetwork(self)->None:
+    # def trimNetwork(self)->None:
 
-        strains, phages = self.allStrains, self.allPhages
+    #     strains, phages = self.allStrains, self.allPhages
 
-        record = self.fullRecord()
+    #     record = self.fullRecord()
 
-        self.trimmedStrains = {strainName:strain for strainName,strain in strains.items() if record[record['name']==strainName]['pop'].max()>=100}
-        self.trimmedPhages = {phageName:phage for phageName,phage in phages.items() if record[record['name']==phageName]['pop'].max()>=100}
-        print('Trimmed Strains:\t%s'% len(self.trimmedStrains))
-        print('Trimmed Phages:\t%s'% len(self.trimmedPhages))
+    #     self.trimmedStrains = {strainName:strain for strainName,strain in strains.items() if record[record['name']==strainName]['pop'].max()>=100}
+    #     self.trimmedPhages = {phageName:phage for phageName,phage in phages.items() if record[record['name']==phageName]['pop'].max()>=100}
+    #     print('Trimmed Strains:\t%s'% len(self.trimmedStrains))
+    #     print('Trimmed Phages:\t%s'% len(self.trimmedPhages))
 
-        return None
+    #     return None
 
 ##########################################################################################################
 

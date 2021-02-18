@@ -40,7 +40,7 @@ arguments = parser.parse_args()
 out = arguments.output
 timesteps = arguments.timesteps
 single_run = arguments.single
-single_run = False
+# single_run = False
 sims = arguments.sims
 pS = arguments.pS
 m = arguments.m
@@ -129,7 +129,8 @@ def initialize(param_dict:dict=None):
 
     strain1 = Strain.Strain(
         name = "s0001",
-        a=a,b=b,c=c,y=y,f=f,
+        type_ = 'init',
+        a=a,b=b,c=c,y=y,f=f,pS=pS,
         crispr = crispr0,
         phReceptors = {
             receptor1.name:receptor1
@@ -157,10 +158,11 @@ def initialize(param_dict:dict=None):
 
     phage1 = Phage.Phage(
         name = "p0001",
-        adsp = adsp,beta = beta, d = d,
+        adsp = adsp,beta = beta, d = d, m = m,
         receptor = receptor1,
         pop = phageinit,
-        protospacers = protospacers
+        protospacers = protospacers,
+        evoTraits=['d']
 
     )
 
@@ -177,7 +179,7 @@ def initialize(param_dict:dict=None):
     # )
 
     com = Community.Community(
-        c=c,pS=pS,m=m,l=l,
+        c=c,l=l,
         strains = {
             strain1.name: strain1,
             # strain2.name: strain2
@@ -214,11 +216,6 @@ def initialize(param_dict:dict=None):
             }        
     )
     return com 
-
-
-# def timestep(community):
-
-#     return community
 
     
 """
@@ -313,7 +310,7 @@ def one_sim(params):
 
     community = initialize(params)
     
-    print("pS:\t%s"%community.pS)
+    print("pS:\t%s"%community.strains["s0001"].pS)
     print("b:\t%s"%community.strains["s0001"].b)
     print("a:\t%s"%community.strains["s0001"].a)
     print("c:\t%s"%community.strains["s0001"].c)

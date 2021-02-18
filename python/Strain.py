@@ -1,13 +1,14 @@
 ## Ford Fishman
 
 import Spacer; import Crispr; import PhageReceptor
+from Organism import Organism
 from Phage import Phage
 import general as gen
 import Error as er
 
 ##########################################################################################################
 
-class Strain():
+class Strain(Organism):
 
     """
     name (str): tag for this strain
@@ -21,15 +22,14 @@ class Strain():
     activeReceptors (dict)
     pop (float)
     """
-    def __init__(self, name:str, a:float, b:float, c:float, f:float,y:float, crispr:Crispr= None,phReceptors:dict = None, pop:float = 1):
-        self.name = name
+    def __init__(self, name:str, type_:str,a:float, b:float, c:float, f:float,y:float, pS:float,crispr:Crispr= None,phReceptors:dict = None, pop:float = 1, evoTraits:list=None):
+        super().__init__(name, pop, type_, evoTraits) # initialize general Organism traits and methods
         self.crispr = crispr
         self.phReceptors = phReceptors
         self.activeReceptors = dict()
-        self.pop = pop
         self.ipop = 0 # infected pop
         self.intrinsicFitness = 1 # CHANGE THIS AT SOME POINT WHEN I ADD IN RESOURCES
-        self.infections = dict()
+        self.infections = dict() # deprecated
         # self.parent = parent
         self.descendents = 0 # the number of descendent strains from this strain
 
@@ -38,15 +38,9 @@ class Strain():
         self.c = c
         self.y = y
         self.f = f
+        self.pS = pS
 
         self.record = gen.initRecord()
-
-        if self.name == 's0001':
-            self.strainType = 'initial'
-        
-        else:
-            self.strainType = 'novel'
-        
         
         if not phReceptors is None:
             for receptorName in phReceptors: # for all receptors in a strain
@@ -56,57 +50,57 @@ class Strain():
 
 ##########################################################################################################
     """
-    Main timestep function
+    Main timestep function (deprecated)
     """
-    def timestep(self, N:int, l:float, step:int):
-        """
-        N (int): total host density
-        l (float): probability an infection lyses
-        step (int): current timestep
-        """
+    # def timestep(self, N:int, l:float, step:int):
+    #     """
+    #     N (int): total host density
+    #     l (float): probability an infection lyses
+    #     step (int): current timestep
+    #     """
 
-        i = len(self.record) # how long this strain has been around
+    #     i = len(self.record) # how long this strain has been around
 
-        a = self.a
-        b = self.b
-        c = self.c 
-        y = self.y
-        Nh = self.pop
+    #     a = self.a
+    #     b = self.b
+    #     c = self.c 
+    #     y = self.y
+    #     Nh = self.pop
 
-        currentInfections = sum(self.infections.values())
-        self.ipop = currentInfections
+    #     currentInfections = sum(self.infections.values())
+    #     self.ipop = currentInfections
 
-        # labeling system for record
-        strainType = 'novel'
+    #     # labeling system for record
+    #     strainType = 'novel'
 
-        if not self.hasCost(): # set cost to 0 if strain does not have CRISPR-associated cost
-            c = 0
-        if self.name == 's0001':
-            strainType = 'initial'
+    #     if not self.hasCost(): # set cost to 0 if strain does not have CRISPR-associated cost
+    #         c = 0
+    #     if self.name == 's0001':
+    #         strainType = 'initial'
         
-        # fitness 
-        r = b * ( 1 - c )
-        # self.ipop += currentInfections - l * self.ipop # infected pop 
+    #     # fitness 
+    #     r = b * ( 1 - c )
+    #     # self.ipop += currentInfections - l * self.ipop # infected pop 
         
-        # self.pop = ( r*Nh - currentInfections)/( 1 + ( N/a )**y ) 
-        # based upon Beverton-Holt model
-        self.pop = ( r*Nh )/( 1 + ( N/a )**y ) - currentInfections
-        # lotka-volterra predation
-        # self.pop += r*Nh*(1 - N/a) - currentInfections  
-        # Extinction threshold
-        if self.pop+self.ipop < 0.1: 
-            self.pop = 0
-            self.ipop = 0
+    #     # self.pop = ( r*Nh - currentInfections)/( 1 + ( N/a )**y ) 
+    #     # based upon Beverton-Holt model
+    #     self.pop = ( r*Nh )/( 1 + ( N/a )**y ) - currentInfections
+    #     # lotka-volterra predation
+    #     # self.pop += r*Nh*(1 - N/a) - currentInfections  
+    #     # Extinction threshold
+    #     if self.pop+self.ipop < 0.1: 
+    #         self.pop = 0
+    #         self.ipop = 0
 
-        if not self.crispr is None:
-            spacers = len(self.crispr)
-        else:
-            spacers = None 
+    #     if not self.crispr is None:
+    #         spacers = len(self.crispr)
+    #     else:
+    #         spacers = None 
 
-        self.record.loc[i] = [step, self.name, self.pop, self.pop-Nh, (self.pop-Nh)/Nh, strainType, spacers]
+    #     self.record.loc[i] = [step, self.name, self.pop, self.pop-Nh, (self.pop-Nh)/Nh, strainType, spacers]
 
 
-        return None
+    #     return None
 
 ##########################################################################################################
 
