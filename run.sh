@@ -26,6 +26,7 @@ adsp=1e-8
 beta=100
 popinit=1e5
 phageinit=1e7
+e='pS'
 
 # settings=${sims}sims_t${t}_a${a}_adsp${adsp}_b${b}_beta${beta}_c${c}_d${d}_f${f}_l${l}_m${m}_pS${pS}_pop${popinit}_phage${phageinit}
 
@@ -44,10 +45,10 @@ touch $log
 # run in either single or multi mode
 if [[ $sims -eq 1 ]]
 then
-    python3 $python/main.py -s -S $sims -t $t -o $output -pS $pS -a $a -b $b -c $c -l $l -m $m -f $f -d $d --adsp $adsp --beta $beta --popinit $popinit --phageinit $phageinit > $log
+    python3 $python/main.py -s -S $sims -t $t -o $output -pS $pS -a $a -b $b -c $c -l $l -m $m -f $f -d $d --adsp $adsp --beta $beta --popinit $popinit --phageinit $phageinit -e $e > $log
     Rscript $r/plotGraphs1Sim.R -f $output/
 else
-    python3 $python/main.py -M -S $sims -t $t -o $output -pS $pS -a $a -b $b -c $c -l $l -f $f -d $d --adsp $adsp --beta $beta --popinit $popinit --phageinit $phageinit > $log
+    python3 $python/main.py -M -S $sims -t $t -o $output -pS $pS -a $a -b $b -c $c -l $l -f $f -d $d --adsp $adsp --beta $beta --popinit $popinit --phageinit $phageinit -e $e > $log
     Rscript $r/plotGraphsMultiSim.R -f "$output/summary.csv" -o $output
 fi
 

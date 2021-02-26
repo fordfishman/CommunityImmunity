@@ -18,16 +18,20 @@ class Community():
     k (int): carrying capacity
     """
 
-    def __init__(self, c:float, l:float, strains:dict, phages:dict=None, nameGenerator=None):
+    def __init__(self, c:float, l:float, strains:dict, phages:dict=None, nameGenerator=None, evoTraits:list=None):
 
         self.base_c = c
         self.l = l
         self.strains = strains
         self.phages = phages
+        self.evoTraits = evoTraits
 
         # keep track of all phages and all strains
         self.allN = list()
         self.allP = list()
+
+        # keep track of evolved parameters
+        self.params = list()
 
         self.initStrains(); self.initPhages(); self.initNetwork()
 
@@ -154,20 +158,6 @@ class Community():
 
         return df
 
-    # def fullRecord(self):
-    #     """Record of all strain and phage data from the beginning to the current step"""
-    #     record = self.record
-
-    #     for phage in self.phages.values():
-            
-    #         record = record.append( phage.record, ignore_index = True)  
-
-    #     for strain in self.strains.values():
-
-    #         record = record.append( strain.record, ignore_index = True )  
-        
-    #     return record
-
 ##########################################################################################################
 
     """
@@ -177,6 +167,7 @@ class Community():
     def timestep(self, step:int):
 
         self.growth()
+        self.params.append( self.paramEvolution() )
         self.__updateComSize()
     
         return None
@@ -360,6 +351,36 @@ class Community():
         self.allP.append(self.P)
 
         return None
+    
+    def paramEvolution(self)->dict:
+        """ Keeps track of weighted averages of evolving parameters """
+
+        # phage parameters
+        phage_param = {
+            'adsp': self.adsp,
+            'beta': self.beta, 
+            'd': self.d, 
+            'm': self.m,
+        }
+        # proportions of each phage in the population
+        P = self.P.reshape(-1)
+        phage_prop = P / np.sum(P)
+        evolved_phage = {param:np.dot(phage_prop, vector.reshape(-1)) for param, vector in phage_param.items()}
+
+        # do the same for hosts
+        strain_param = {
+            'a': self.a,
+            'b': self.b, 
+            'c': self.c, 
+            'y': self.y,
+            'f': self.f,
+            'pS': self.pS
+        }
+        N = self.N.reshape(-1)
+        strain_prop = N / np.sum(N)
+        evolved_strain = {param:np.dot(strain_prop, vector.reshape(-1)) for param, vector in strain_param.items()}
+
+        return {**evolved_phage, **evolved_strain} # return combined dict
 
 
     def mutations(self, n)->dict:
