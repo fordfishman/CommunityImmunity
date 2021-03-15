@@ -445,7 +445,7 @@ class Community():
         if not phage.evoTraits is None:
 
             for param in phage.evoTraits: # limit scale of change to current magnitude
-                p[param] = np.random.normal(0, 0.2) * p[param] + p[param]
+                p[param] = np.random.normal(0, 0.5) * p[param] + p[param]
 
         newPhage = Phage(
             name=newName, 
@@ -526,7 +526,7 @@ class Community():
         if not strain.evoTraits is None:
 
             for param in strain.evoTraits: # limit scale of change to current magnitude
-                p[param] = np.random.normal(0, 0.2) * p[param] + p[param]
+                p[param] = np.random.normal(0, 0.5) * p[param] + p[param]
 
         newStrain = Strain( # organism with new spacer is a new strain, one starting cell
             name=newName,
