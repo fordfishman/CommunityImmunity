@@ -2,31 +2,22 @@
 
 #SBATCH -J multi_im
 #SBATCH -p general
-#SBATCH -o %j.txt
-#SBATCH -e %j.err
+#SBATCH -o multi_im_%j.txt
+#SBATCH -e multi_im_%j.err
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=ffishman@iu.edu
 #SBATCH --nodes=1
-#SBATCH --mincpus=8
-#SBATCH --ntasks-per-node=1
-#SBATCH --time=02:00:00
-
-
-
-#PBS -k o 
-#PBS -l nodes=1:ppn=16,walltime=0:03:00:00
-#PBS -l vmem=70gb
-#PBS -M ffishman@iu.edu
-#PBS -m abe 
-#PBS -N multi_im
-#PBS -j oe 
+#SBATCH --mem=50000
+#SBATCH --ntasks-per-node=16
+#SBATCH --time=01:00:00
 
 
 # Set pathing
 source activate com_im
 cwd=$(pwd)
 
-sourcepath=$cwd/GitHub/CommunityImmunity
+# sourcepath=$cwd/GitHub/CommunityImmunity
+sourcepath=$cwd
 
 cd $sourcepath
 
@@ -34,6 +25,9 @@ python=$sourcepath/python
 r=$sourcepath/r
 
 dt=$(date "+%Y%m%d_%H%M")
+# echo $sourcepath
+echo $dt
+
 
 sims=1000
 t=5000
@@ -41,7 +35,7 @@ a=1e6
 c=0.01
 f=0
 l=0.9
-# m=1e-7
+m=1e-7
 b=1.2
 pS=1e-6
 d=0.1
@@ -49,6 +43,7 @@ adsp=1e-8
 beta=100
 popinit=1e5
 phageinit=1e7
+e='m'
 
 output=$sourcepath/output/${dt}_${sims}sims_t${t}
 
@@ -62,7 +57,7 @@ mkdir $output/temp
 # initialize log file
 touch $log
 
-python3 $python/main.py -M -S $sims -t $t -o $output -pS $pS -a $a -b $b -c $c -l $l -f $f -d $d --adsp $adsp --beta $beta --popinit $popinit --phageinit $phageinit > $log
+python3 $python/main.py -M -S $sims -t $t -o $output -a $a -b $b -c $c -l $l -f $f -d $d --adsp $adsp --beta $beta --popinit $popinit --phageinit $phageinit -e $e -pS $pS > $log
 Rscript $r/plotGraphsMultiSim.R -f "$output/summary.csv" -o $output
 
 
