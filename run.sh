@@ -12,8 +12,8 @@ r=$sourcepath/r
 dt=$(date "+%Y%d%m_%H%M")
 dt=test
 
-sims=1
-t=1000
+sims=100
+t=10000
 a=1e6
 c=0.01
 f=0
@@ -26,7 +26,7 @@ adsp=1e-8
 beta=100
 popinit=1e5
 phageinit=1e7
-e='pS'
+e=''
 
 # settings=${sims}sims_t${t}_a${a}_adsp${adsp}_b${b}_beta${beta}_c${c}_d${d}_f${f}_l${l}_m${m}_pS${pS}_pop${popinit}_phage${phageinit}
 
@@ -45,11 +45,11 @@ touch $log
 # run in either single or multi mode
 if [[ $sims -eq 1 ]]
 then
-    python3 $python/main.py -s -S $sims -t $t -o $output -pS $pS -a $a -b $b -c $c -l $l -m $m -f $f -d $d --adsp $adsp --beta $beta --popinit $popinit --phageinit $phageinit -e $e > $log
+    python3 $python/main.py -s -S $sims -t $t -o $output -pS $pS -a $a -b $b -c $c -l $l -m $m -f $f -d $d --adsp $adsp --beta $beta --popinit $popinit --phageinit $phageinit  > $log
     Rscript $r/plotGraphs1Sim.R -f $output/
 else
-    python3 $python/main.py -M -S $sims -t $t -o $output -pS $pS -a $a -b $b -c $c -l $l -f $f -d $d --adsp $adsp --beta $beta --popinit $popinit --phageinit $phageinit -e $e > $log
-    Rscript $r/plotGraphsMultiSim.R -f "$output/summary.csv" -o $output
+    python3 $python/main.py -M -S $sims -t $t -o $output -pS $pS -a $a -b $b -c $c -l $l -m $m -f $f -d $d --adsp $adsp --beta $beta --popinit $popinit --phageinit $phageinit  > $log
+    # Rscript $r/plotGraphsMultiSim.R -f "$output/summary.csv" -o $output
 fi
 
 

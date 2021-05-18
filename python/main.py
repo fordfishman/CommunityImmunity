@@ -34,7 +34,7 @@ parser.add_argument('-d', default=None, type=float, help="phage decay rate per t
 parser.add_argument('-l', default=None, type=float, help="proportion of infections that lead to bursting each timestep")
 parser.add_argument('--popinit',default=None, type=float, help="initial host population")
 parser.add_argument('--phageinit',default=None, type=float, help="initial phage population")
-parser.add_argument('-e','--evolved_params',default="", type=str, help="Parameters that can evolved over the course of a simulations. Separate each by space.")
+parser.add_argument('-e','--evolved_params',default=None, type=str, help="Parameters that can evolved over the course of a simulations. Separate each by space.")
 parser.set_defaults(single=True)
 
 arguments = parser.parse_args()
@@ -55,9 +55,12 @@ d = arguments.d
 l = arguments.l
 popinit = arguments.popinit
 phageinit = arguments.phageinit
-e = arguments.evolved_params
+evolved_params = arguments.evolved_params
 
-evolved_params = e.split(' ')
+if not evolved_params is None:
+    evolved_params = evolved_params.split(' ')
+else:
+    evolved_params = []
 
 strain_evolved = list()
 phage_evolved = list()
@@ -183,6 +186,16 @@ def initialize(param_dict:dict=None):
 
     )
 
+    phage2 = Phage.Phage(
+        name = "p2",
+        adsp = adsp,beta = beta, d = d, m = m*10,
+        receptor = receptor1,
+        pop = phageinit,
+        protospacers = protospacers,
+        evoTraits=phage_evolved
+
+    )
+
     # spacer = strain2.crispr.makeSpacer("AGTAGTAGTAGTAGTAGTAGTAGTAGTAGTAGTAGTAGTAGTAGTAGTAGT")
     # spacer = strain2.crispr.makeSpacer(phage1.genome)
 
@@ -202,10 +215,12 @@ def initialize(param_dict:dict=None):
             # strain2.name: strain2
         },
         phages = {
-            phage1.name: phage1
+            phage1.name: phage1,
+            phage2.name: phage2
         },
         nameGenerator=nameGenerator,
-        evoTraits=evolved_params
+        evoTraits=evolved_params,
+        le = 0.2
     )
 
     com.summary = pd.Series(
@@ -371,15 +386,17 @@ def one_sim(params):
     community.summary["immune"] = community.IList[-1]
     community.summary["susceptible"] = community.SList[-1]
 
-    for param in evolved_params:
-        val = community.params[-1][param] # get the value for each parameter at the last timestep
-        diff = val - community.summary[param] # difference between initial parameter and current
+    if len(evolved_params) > 0:
 
-        # store final value and differential
-        final_name = "%s_final" % param
-        diff_name = "%s_diff" % param
-        community.summary[final_name] = val
-        community.summary[diff_name] = diff
+        for param in evolved_params:
+            val = community.params[-1][param] # get the value for each parameter at the last timestep
+            diff = val - community.summary[param] # difference between initial parameter and current
+
+            # store final value and differential
+            final_name = "%s_final" % param
+            diff_name = "%s_diff" % param
+            community.summary[final_name] = val
+            community.summary[diff_name] = diff
 
     net = community.net
     plotBipartite(net, outputNetwork)
@@ -438,7 +455,11 @@ def one_sim(params):
             ),
         columns = ['HostRichness','PhageRichness','time'],
         )
-
+    P = community.P.reshape(-1)
+    phage_prop = P / np.sum(P)
+    print(np.dot(phage_prop, community.m))
+    
+    print(community)
     df3 = community.fullDF()
 
     df3.drop(df3[df3['pop'] <= 0].index, inplace=True)
@@ -472,16 +493,17 @@ def map_store(community):
 
     A = pd.DataFrame(community.A, columns=phageIDS, index=strainIDS)
     A.to_csv(temp)
-    
-    for param in evolved_params:
-        val = community.params[-1][param] # get the value for each parameter at the last timestep
-        diff = val - community.summary[param] # difference between initial parameter and current
 
-        # store final value and differential
-        final_name = "%s_final" % param
-        diff_name = "%s_diff" % param
-        community.summary[final_name] = val
-        community.summary[diff_name] = diff
+    if len(evolved_params) > 0:
+        for param in evolved_params:
+            val = community.params[-1][param] # get the value for each parameter at the last timestep
+            diff = val - community.summary[param] # difference between initial parameter and current
+
+            # store final value and differential
+            final_name = "%s_final" % param
+            diff_name = "%s_diff" % param
+            community.summary[final_name] = val
+            community.summary[diff_name] = diff
 
     if community.A.shape[0] > 1 and community.A.shape[1] > 1:
         output = check_output([networkR, '-f', temp]).decode('utf-8')
@@ -499,6 +521,8 @@ def map_store(community):
 
 def multi_sim(sims, set_params, unset_params):
 
+    evolved_params.append('m')
+
     communities = [ initialize(set_params) for i in range(sims) ]
 
     # output name for run uses provided output name, number of sims, set parameters
@@ -510,8 +534,6 @@ def multi_sim(sims, set_params, unset_params):
     df = pd.DataFrame(None, 
         columns=['id',"pop","phage","immune","susceptible","richness","phageRichness","pS", "b", "a", "c", "f","beta", "adsp", "d", "m", "l", "popinit", "phageinit","nodf","Q"],
     )
-    
-    timesteps = 5000
 
     map_proc = partial(sim_proc, timesteps=timesteps)
 

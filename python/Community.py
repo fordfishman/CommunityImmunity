@@ -18,13 +18,14 @@ class Community():
     k (int): carrying capacity
     """
 
-    def __init__(self, c:float, l:float, strains:dict, phages:dict=None, nameGenerator=None, evoTraits:list=None):
+    def __init__(self, c:float, l:float, strains:dict, phages:dict=None, nameGenerator=None, evoTraits:list=None, le:float = 0.0):
 
         self.base_c = c
         self.l = l
         self.strains = strains
         self.phages = phages
         self.evoTraits = evoTraits
+        self.le = le
 
         # keep track of all phages and all strains
         self.allN = list()
@@ -203,7 +204,6 @@ class Community():
             self.f = np.append(self.f, strain.f)
             self.y = np.append(self.y, strain.y)
             self.N = np.append(self.N, strain.pop)
-            self.allN.append(self.N)
             self.I_n = np.append(self.I_n, strain.ipop)
             self.pS = np.append(self.pS, strain.pS).reshape(-1,1)
 
@@ -213,6 +213,7 @@ class Community():
                 c = self.base_c
 
             self.c = np.append(self.c, c)
+            self.allN.append(self.N)
 
         self.reshape(phage=False)
         
@@ -244,9 +245,9 @@ class Community():
             self.m = np.append(self.m, phage.m)
             self.adsorbed = np.append(self.adsorbed, phage.adsorbed)
             self.P = np.append(self.P, phage.pop)
-            self.allP.append(self.P)
             self.I_p = np.append(self.I_p, phage.adsorbed)
-        
+            
+        self.allP.append(self.P)
         self.reshape(host=False)
 
         return None
@@ -298,6 +299,7 @@ class Community():
             self.P = self.P.reshape(-1,1)
             self.adsp = self.adsp.reshape(-1,1)
             self.I_p = self.I_p.reshape(-1,1)
+            self.m = self.m.reshape(-1,1)
         
         if host:
             self.a = self.a.reshape(-1,1)
@@ -315,7 +317,7 @@ class Community():
 
         # infections
         # theoretical number of infections if all hosts are infectible to all phagesS
-        I_pot = np.matmul((self.N), (self.P*self.adsp).transpose())
+        I_pot = np.matmul((self.N), (self.P*(self.adsp)).transpose())
         I = self.A*I_pot #
         I_p = np.sum(I, axis=0).reshape(-1,1) # number of new infections for each phage
         I_n = np.sum(I, axis=1).reshape(-1,1) # number of new infections for each strain
@@ -329,7 +331,8 @@ class Community():
 
         # phage
         # self.P += self.beta*self.I_p*self.l - I_p - self.d*self.P
-        self.P += self.beta*I_p - I_p - self.d*self.P
+        # P_i += burst * infections_i * non_lethal_mutant_proportion - virions lost to infection - decay
+        self.P += self.beta*I_p*(1-self.m*self.le) - I_p - self.d*self.P 
         self.P = np.where(self.P < 0, 0, self.P)
 
         # mutations
@@ -388,7 +391,8 @@ class Community():
         n: list of infection events by phage
         """
         n = list(n.reshape(-1))
-        numEvents = np.random.binomial(n,self.m)
+        m = self.m.reshape(-1)
+        numEvents = np.random.binomial(n,m)
         newPhages = dict()
         strains = self.strains
         edges = list()
@@ -446,11 +450,15 @@ class Community():
 
             for param in phage.evoTraits: # limit scale of change to current magnitude
                 p[param] = np.random.normal(0, 0.5) * p[param] + p[param]
+    
+        beta = (1-np.random.exponential(scale=0.1)) * p['beta'] # each mutation has a deleterious effect, generated from an exp. distribution
+
+        if beta < 0: beta = 0
 
         newPhage = Phage(
             name=newName, 
             adsp = p['adsp'], 
-            beta = p['beta'], 
+            beta = beta, 
             d = p['d'], 
             m = p['m'],
             receptor=phage.receptor,
