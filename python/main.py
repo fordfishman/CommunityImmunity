@@ -34,7 +34,8 @@ parser.add_argument('-d', default=None, type=float, help="phage decay rate per t
 parser.add_argument('-l', default=None, type=float, help="proportion of infections that lead to bursting each timestep")
 parser.add_argument('--popinit',default=None, type=float, help="initial host population")
 parser.add_argument('--phageinit',default=None, type=float, help="initial phage population")
-parser.add_argument('-e','--evolved_params',default=None, type=str, help="Parameters that can evolved over the course of a simulations. Separate each by space.")
+parser.add_argument('-e','--evolved_params',default=None, type=str, help="Parameters that can evolved over the course of a simulations. Separate each by a space.")
+parser.add_argument('-des','--description', default='', type=str, help="Short description of the the run that will go into the logfile.")
 parser.set_defaults(single=True)
 
 arguments = parser.parse_args()
@@ -56,6 +57,7 @@ l = arguments.l
 popinit = arguments.popinit
 phageinit = arguments.phageinit
 evolved_params = arguments.evolved_params
+description = arguments.description
 
 if not evolved_params is None:
     evolved_params = evolved_params.split(' ')
@@ -273,6 +275,8 @@ def main():
     
     print(unset_params)
     print()
+
+    print("Description\n%s" % description)
     
     if single_run:
         one_sim(set_params)
@@ -537,7 +541,7 @@ def multi_sim(sims, set_params, unset_params):
 
     map_proc = partial(sim_proc, timesteps=timesteps)
 
-    pool = mp.Pool(mp.cpu_count())
+    pool = mp.Pool(processes=None)
 
     tasks = len(communities)
 
